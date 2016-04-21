@@ -56,7 +56,7 @@ impl Neg for Integer {
 	type Output = Integer;
 
 	fn neg(self) -> Integer {
-		Integer{ positive : !self.positive, content : self.content.clone()}
+		Integer{ positive : !self.positive, content : self.content}
 	}
 }
 
