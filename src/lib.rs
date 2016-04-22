@@ -1,3 +1,5 @@
+// #![feature(const_fn)]
+
 // Modules.
 pub mod rmp;
 
@@ -9,32 +11,58 @@ mod tests {
 
 	#[test]
 	fn equal() {
-		let mp = Integer::from(63_u64);
-		let mp2 = Integer::from(63_u64);
+		let mp = Integer::from(63);
+		let mp2 = Integer::from(63);
 
 		assert!( mp == mp2)
 	}
 
 	#[test]
 	fn not_equal() {
-		let mp = Integer::from(63_u64);
-		let mp2 = Integer::from(64_u64);
+		let mp = Integer::from(63);
+		let mp2 = Integer::from(64);
 
 		assert!( mp != mp2)
 	}
 
 	#[test]
 	fn plus1() {
-		let mp = Integer::from(63_u64);
-		let one = Integer::from(1_u64);
-		let mp2 = Integer::from(64_u64);
+		let mp = Integer::from(63);
+		let one = Integer::from(1);
+		let mp2 = Integer::from(64);
 
 		assert!( mp + one == mp2);
 
-		let mv = Integer::from( u64::max_value());
-		let one = Integer::from(1_u64);
-		let zero = Integer::from(0_u64);
+		let mv = Integer::from( u32::max_value());
+		let one = Integer::from(1);
+		let zero = Integer::from(0);
 
 		assert!( zero != mv + one)
+	}
+
+	#[test]
+	fn even() {
+		assert!( Integer::from(0).is_even());
+		assert!( Integer::from(2).is_even());
+		assert!( Integer::from(-2).is_even());
+	}
+
+	#[test]
+	fn odd() {
+		assert!( Integer::from(-1).is_odd());
+		assert!( Integer::from(1).is_odd());
+	}
+
+	#[test]
+	fn div_mod() {
+		let i32 = Integer::from( 32);
+		let i16 = Integer::from( 16);
+		let i2 = Integer::from( 2);
+		let i0 = Integer::from( 0);
+		let i1 = Integer::from( 1);
+		println!("********** Hello world ************");
+		let (q,r) = i32.div_mod(&i2);
+		println!("{}", q);
+		// assert!( i32.div_mod(&i2) == ( i16, i0))
 	}
 }

@@ -1,16 +1,20 @@
 
 use std::cmp::{PartialEq, max, min};
 use std::convert::From;
+use std::fmt;
 // use std::isize as isize;
 // use std::num::Wrapping;
 use std::ops::{Add, Neg};
 // use std::string::ToString;
 
+use rmp::div::{div_mod_u};
+use rmp::internal::{div_by_zero};
+
 // Data type for multi precision integers.
 #[derive(Debug)]
 pub struct Integer {
 	// _size : isize, // Absolute value of the size of the number. MP is negative is size is negative.
-	content : Vec<u64>, // Contents of the number. If number is 0, length of content is 0.
+	content : Vec<u32>, // Contents of the number. If number is 0, length of content is 0.
 	positive : bool,    // If the number is positive. If number is 0, positive is true.
 }
 
@@ -48,6 +52,65 @@ impl Integer {
 	pub fn is_negative(&self) -> bool {
 		!self.positive
 	}
+
+	/// Checks whether the integer is a multiple of the argument.
+	pub fn is_multiple_of(&self, i : &Integer) -> bool {
+		i.divides( self)
+	}
+
+	/// Checks whether the integer divides the argument.
+	pub fn divides(&self, a : &Integer) -> bool {
+		a.modulus( self).is_zero()
+
+
+		// Could we binary search this??
+	}
+
+	pub fn div_mod(&self, rhs : &Integer) -> (Integer, Integer) {
+		// Check for div by 0.
+		if rhs.is_zero() {
+			div_by_zero()
+		}
+
+
+		let (q, r) = div_mod_u( &self.content, &rhs.content);
+		match ( self.is_positive(), rhs.is_positive()) {
+			(true, true) =>
+				(Integer{positive : true, content : q}, Integer{ positive : true, content : r}),
+			_ => 
+				panic!("TODO")
+		}
+	}
+
+	/// Determine if the integer is zero.
+	#[inline(always)]
+	pub  fn is_zero(&self) -> bool {
+		self.size() == 0
+	}
+
+	/// Determine if the integer is even.
+	#[inline(always)]
+	pub fn is_even(&self) -> bool {
+		if self.is_zero() {
+			true
+		}
+		else if self.content[0] & 1 == 1 {
+			false
+		}
+		else {
+			true
+		}
+	}
+
+	pub fn modulus(&self, m : &Integer) -> Integer {
+		panic!("TODO")
+	}
+
+	/// Determine if the integer is odd.
+	#[inline(always)]
+	pub fn is_odd(&self) -> bool {
+		!self.is_even()
+	}
 }
 
 // Trait implementations.
@@ -64,7 +127,7 @@ impl Add for Integer {
 	type Output = Integer;
 
 	fn add( self, rhs : Integer) -> Integer {
-		fn add_positives( lhs : Integer, rhs : Integer) -> Vec<u64> {
+		fn add_positives( lhs : Integer, rhs : Integer) -> Vec<u32> {
 			let mut cs = Vec::with_capacity( max( lhs.capacity(), rhs.capacity())); // TODO: Improve this capacity?? Do we need to zero out memory? XXX
 			let mut i = 0;
 			let mut c = false;
@@ -125,8 +188,8 @@ impl Add for Integer {
 	}
 }
 
-impl From<u64> for Integer {
-	fn from(x : u64) -> Integer {
+impl From<u32> for Integer {
+	fn from(x : u32) -> Integer {
 		if x == 0 {
 			Integer{ positive : true, content : Vec::with_capacity(1)}
 		}
@@ -136,26 +199,27 @@ impl From<u64> for Integer {
 	}
 }
 
-impl From<i64> for Integer {
-	fn from(x : i64) -> Integer {
+impl From<i32> for Integer {
+	fn from(x : i32) -> Integer {
 		if x == 0 {
 			Integer{ positive : true, content : Vec::with_capacity(1)}
 		}
 		else if x > 0 {
-			Integer{ positive : true, content : vec!{x as u64}}
+			Integer{ positive : true, content : vec!{x as u32}}
 		}
-		else if x == i64::min_value(){
-			let u = i64::max_value() as u64 + 1;
+		else if x == i32::min_value(){
+			let u = i32::max_value() as u32 + 1;
 			Integer{ positive : false, content : vec!{u}}
 		}
 		else {
-			Integer{ positive : false, content : vec!{-x as u64}}
+			Integer{ positive : false, content : vec!{-x as u32}}
 		}
 	}
 }
 
 // impl ToString for Integer {
 // 	fn to_string(&self) -> String {
+// 		// TODO: Actually implement this XXX
 // 		let mut s = String::new();
 // 		for n in &self.content {
 // 			s = n.to_string()
@@ -163,6 +227,18 @@ impl From<i64> for Integer {
 // 		s
 // 	}
 // }
+
+impl fmt::Display for Integer {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+ 		// TODO: Actually implement this XXX
+		if self.is_zero() {
+			write!(f, "0")
+		}
+		else {
+			write!(f, "{}", self.content[0].to_string())
+		}
+	}
+}
 
 impl PartialEq for Integer {
 	fn eq(&self, rhs : &Integer) -> bool {
