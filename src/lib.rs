@@ -20,9 +20,11 @@ mod tests {
 	#[test]
 	fn not_equal() {
 		let mp = Integer::from(63);
+		let nmp = Integer::from(-63);
 		let mp2 = Integer::from(64);
 
-		assert!( mp != mp2)
+		assert!( mp != mp2);
+		assert!( mp != nmp);
 	}
 
 	#[test]
@@ -63,6 +65,10 @@ mod tests {
 		println!("********** Hello world ************");
 		let (q,r) = i32.div_mod(&i2);
 		println!("{}", q);
-		// assert!( i32.div_mod(&i2) == ( i16, i0))
+		println!("{}", r);
+		println!("{}", i16);
+		println!("{}", i0);
+		assert!( q == i16);
+		assert!( r == i0);
 	}
 }

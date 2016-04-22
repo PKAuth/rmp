@@ -8,14 +8,14 @@ use std::ops::{Add, Neg};
 // use std::string::ToString;
 
 use rmp::div::{div_mod_u};
-use rmp::internal::{div_by_zero};
+use rmp::internal::{div_by_zero, Block};
 
 // Data type for multi precision integers.
 #[derive(Debug)]
 pub struct Integer {
-	// _size : isize, // Absolute value of the size of the number. MP is negative is size is negative.
-	content : Vec<u32>, // Contents of the number. If number is 0, length of content is 0.
-	positive : bool,    // If the number is positive. If number is 0, positive is true.
+	content : Vec<Block>, // Blocks of the number. If number is 0, number of blocks is 0.
+	positive : bool,    // Whether the number is positive. 
+	// Maybe?? If number is 0, positive is true. If not, we need to change PartialEq.
 }
 
 impl Integer {
@@ -72,6 +72,8 @@ impl Integer {
 			div_by_zero()
 		}
 
+		// TODO: check other base conditions here... XXX
+
 
 		let (q, r) = div_mod_u( &self.content, &rhs.content);
 		match ( self.is_positive(), rhs.is_positive()) {
@@ -127,7 +129,7 @@ impl Add for Integer {
 	type Output = Integer;
 
 	fn add( self, rhs : Integer) -> Integer {
-		fn add_positives( lhs : Integer, rhs : Integer) -> Vec<u32> {
+		fn add_positives( lhs : Integer, rhs : Integer) -> Vec<Block> {
 			let mut cs = Vec::with_capacity( max( lhs.capacity(), rhs.capacity())); // TODO: Improve this capacity?? Do we need to zero out memory? XXX
 			let mut i = 0;
 			let mut c = false;
@@ -188,8 +190,8 @@ impl Add for Integer {
 	}
 }
 
-impl From<u32> for Integer {
-	fn from(x : u32) -> Integer {
+impl From<Block> for Integer {
+	fn from(x : Block) -> Integer {
 		if x == 0 {
 			Integer{ positive : true, content : Vec::with_capacity(1)}
 		}
@@ -244,7 +246,7 @@ impl PartialEq for Integer {
 	fn eq(&self, rhs : &Integer) -> bool {
 		// &self._size == &rhs._size && &self.content == &rhs.content
 
-		if self.size() != rhs.size() {
+		if self.size() != rhs.size() || self.positive != rhs.positive {
 			return false
 		}
 
