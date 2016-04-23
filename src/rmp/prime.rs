@@ -5,14 +5,8 @@ use rmp::types::Integer;
 impl Integer {
 	/// Determine whether the integer is probably prime. 
 	pub fn is_probably_prime(&self) -> bool {
-		// // Check if integer is multiple of the earliest primes.
-		// for &p in first_primes.iter() {
-		// 	if self.is_multiple_of( &Integer::from( p)) {
-		// 		return false
-		// 	}
-		// }
-
-		if FIRST_PRIMES.iter().any( |p| self.is_multiple_of( &Integer::from( *p))) {
+		// Check if integer is multiple of the earliest primes.
+		if FIRST_PRIMES.iter().any( |fp| {let p = Integer::from( *fp); p < *self && self.is_multiple_of( &p)}) {
 			return false
 		}
 

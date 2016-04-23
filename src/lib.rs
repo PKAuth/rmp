@@ -57,18 +57,25 @@ mod tests {
 
 	#[test]
 	fn div_mod() {
+		let i33 = Integer::from( 33);
 		let i32 = Integer::from( 32);
 		let i16 = Integer::from( 16);
 		let i2 = Integer::from( 2);
 		let i0 = Integer::from( 0);
 		let i1 = Integer::from( 1);
-		println!("********** Hello world ************");
 		let (q,r) = i32.div_mod(&i2);
+		assert!( q == i16);
+		assert!( r == i0);
+		let (q,r) = i33.div_mod(&i2);
+		assert!( q == i16);
+		assert!( r == i1);
+
+
+
+		println!("********** Hello world ************");
 		println!("{}", q);
 		println!("{}", r);
 		println!("{}", i16);
 		println!("{}", i0);
-		assert!( q == i16);
-		assert!( r == i0);
 	}
 }

@@ -1,5 +1,5 @@
 
-use std::cmp::{PartialEq, max, min};
+use std::cmp::{Ord, max, min, Ordering};
 use std::convert::From;
 use std::fmt;
 // use std::isize as isize;
@@ -105,7 +105,8 @@ impl Integer {
 	}
 
 	pub fn modulus(&self, m : &Integer) -> Integer {
-		panic!("TODO")
+		let (_, r) = self.div_mod( m);
+		r
 	}
 
 	/// Determine if the integer is odd.
@@ -242,21 +243,57 @@ impl fmt::Display for Integer {
 	}
 }
 
+impl Ord for Integer {
+	fn cmp(&self, rhs: &Integer) -> Ordering {
+		fn helper( a : &Integer, b : &Integer) -> Ordering {
+			let a_s = a.size();
+			let b_s = b.size();
+			if a_s > b_s {
+				return Ordering::Greater
+			}
+			else if a_s < b_s {
+				return Ordering::Less
+			}
+
+			for i in (0..a_s).rev() {
+				let a_i = a.content[i];
+				let b_i = b.content[i];
+				if a_i > b_i {
+					return Ordering::Greater
+				}
+				else if a_i < b_i {
+					return Ordering::Less
+				}
+			}
+
+			Ordering::Equal
+		}
+
+		match ( self.positive, rhs.positive) {
+			(true, false) =>
+				Ordering::Greater,
+			(false, true) =>
+				Ordering::Less,
+			(true, true) =>
+				helper( self, rhs),
+			(false, false) =>
+				helper( self, rhs).reverse(),
+		}
+	}
+}
+
 impl PartialEq for Integer {
 	fn eq(&self, rhs : &Integer) -> bool {
-		// &self._size == &rhs._size && &self.content == &rhs.content
+		self.cmp( rhs) == Ordering::Equal
+	}
+}
 
-		if self.size() != rhs.size() || self.positive != rhs.positive {
-			return false
-		}
+impl Eq for Integer {
+}
 
-		for i in 0..self.size() {
-			if &self.content[i] != &rhs.content[i] {
-				return false
-			}
-		}
-
-		true
+impl PartialOrd for Integer {
+	fn partial_cmp(&self, rhs: &Integer) -> Option<Ordering> {
+		Some( self.cmp( rhs))
 	}
 }
 
