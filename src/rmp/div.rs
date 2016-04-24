@@ -13,6 +13,7 @@ pub fn div_mod_u( u : &Vec<Block>, v : &Vec<Block>) -> ( Vec<Block>, Vec<Block>)
 }
 
 // Divide and mod an unsigned integer when the divisor is one block.
+// From: Hacker's Delight, Second Edition by Henry Warren
 fn div_mod_u_n_1( u : &Vec<Block>, v : Block) -> ( Vec<Block>, Vec<Block>) {
 	#[inline(always)]
 	fn mul_b( x : LongBlock) -> LongBlock {
