@@ -7,7 +7,7 @@ pub mod rmp;
 
 #[cfg(test)]
 mod tests {
-	use rmp::types::Integer;
+	use rmp::Integer;
 
 	#[test]
 	fn equal() {

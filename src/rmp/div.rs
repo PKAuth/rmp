@@ -1,9 +1,45 @@
 // Internal module for division.
 
-use rmp::internal::{remove_leading_zeroes, Block, LongBlock, BLOCK_SIZE, dbl_to_bl};
+use super::{Integer, Block, LongBlock, BLOCK_SIZE};
+use super::internal::{remove_leading_zeroes, dbl_to_bl, div_by_zero};
+
+impl Integer {
+	/// Checks whether the integer is a multiple of the argument.
+	pub fn is_multiple_of(&self, i : &Integer) -> bool {
+		i.divides( self)
+	}
+
+	/// Checks whether the integer divides the argument.
+	pub fn divides(&self, a : &Integer) -> bool {
+		a.modulus( self).is_zero()
+	}
+
+	pub fn div_mod(&self, rhs : &Integer) -> (Integer, Integer) {
+		// Check for div by 0.
+		if rhs.is_zero() {
+			div_by_zero()
+		}
+
+		// TODO: check other base conditions here... XXX
+
+
+		let (q, r) = div_mod_u( &self.content, &rhs.content);
+		match ( self.is_positive(), rhs.is_positive()) {
+			(true, true) =>
+				(Integer{positive : true, content : q}, Integer{ positive : true, content : r}),
+			_ => 
+				panic!("TODO")
+		}
+	}
+
+	pub fn modulus(&self, m : &Integer) -> Integer {
+		let (_, r) = self.div_mod( m);
+		r
+	}
+}
 
 // Divide and mod an unsigned integer.
-pub fn div_mod_u( u : &Vec<Block>, v : &Vec<Block>) -> ( Vec<Block>, Vec<Block>) {
+fn div_mod_u( u : &Vec<Block>, v : &Vec<Block>) -> ( Vec<Block>, Vec<Block>) {
 	// Check for Nx1.
 	if v.len() == 1 {
 		return div_mod_u_n_1( u, v[0])

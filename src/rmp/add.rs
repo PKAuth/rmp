@@ -1,8 +1,9 @@
-use std::cmp::{Ord, max, min, Ordering};
-use std::ops::{Add, Neg};
+use std::cmp::{max, min};
+use std::ops::{Add};
 
-use rmp::internal::{Block};
-use rmp::types::{Integer};
+// use super::internal;
+use super::{Integer, Block};
+// use super::sign;
 
 impl Add for Integer {
 	type Output = Integer;

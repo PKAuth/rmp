@@ -1,4 +1,3 @@
-
 use std::cmp::{Ord, max, min, Ordering};
 use std::convert::From;
 use std::fmt;
@@ -10,49 +9,8 @@ use std::ops::{Neg};
 use rmp::div::{div_mod_u};
 use rmp::internal::{div_by_zero, Block};
 
-// Data type for multi precision integers.
-#[derive(Debug)]
-pub struct Integer {
-	content : Vec<Block>, // Blocks of the number. If number is 0, number of blocks is 0.
-	positive : bool,    // Whether the number is positive. 
-	// Maybe?? If number is 0, positive is true. If not, we need to change PartialEq.
-}
 
 impl Integer {
-	// // Get the max index for the given size.
-	// fn max_index(&self) -> isize {
-	// 	isize::abs(self._size)
-	// }
-
-	// // Get the max index for the given size as a usize.
-	// fn max_index_u(&self) -> usize {
-	// 	self.max_index() as usize
-	// }
-
-	// Get the current size.
-	#[inline(always)]
-	fn size(&self) -> usize {
-		self.content.len()
-	}
-
-	// Get the current capacity.
-	#[inline(always)]
-	fn capacity(&self) -> usize {
-		self.content.capacity()
-	}
-	
-	/// Check if the integer is positive.
-	#[inline(always)]
-	pub fn is_positive(&self) -> bool {
-		self.positive
-	}
-	
-	/// Check if the integer is negative.
-	#[inline(always)]
-	pub fn is_negative(&self) -> bool {
-		!self.positive
-	}
-
 	/// Checks whether the integer is a multiple of the argument.
 	pub fn is_multiple_of(&self, i : &Integer) -> bool {
 		i.divides( self)
@@ -84,76 +42,10 @@ impl Integer {
 		}
 	}
 
-	/// Determine if the integer is zero.
-	#[inline(always)]
-	pub  fn is_zero(&self) -> bool {
-		self.size() == 0
-	}
-
-	/// Determine if the integer is even.
-	#[inline(always)]
-	pub fn is_even(&self) -> bool {
-		if self.is_zero() {
-			true
-		}
-		else if self.content[0] & 1 == 1 {
-			false
-		}
-		else {
-			true
-		}
-	}
-
-	pub fn modulus(&self, m : &Integer) -> Integer {
-		let (_, r) = self.div_mod( m);
-		r
-	}
-
-	/// Determine if the integer is odd.
-	#[inline(always)]
-	pub fn is_odd(&self) -> bool {
-		!self.is_even()
-	}
 }
 
 // Trait implementations.
 
-impl Neg for Integer {
-	type Output = Integer;
-
-	fn neg(self) -> Integer {
-		Integer{ positive : !self.positive, content : self.content}
-	}
-}
-
-impl From<Block> for Integer {
-	fn from(x : Block) -> Integer {
-		if x == 0 {
-			Integer{ positive : true, content : Vec::with_capacity(1)}
-		}
-		else {
-			Integer{ positive : true, content : vec!{x}}
-		}
-	}
-}
-
-impl From<i32> for Integer {
-	fn from(x : i32) -> Integer {
-		if x == 0 {
-			Integer{ positive : true, content : Vec::with_capacity(1)}
-		}
-		else if x > 0 {
-			Integer{ positive : true, content : vec!{x as u32}}
-		}
-		else if x == i32::min_value(){
-			let u = i32::max_value() as u32 + 1;
-			Integer{ positive : false, content : vec!{u}}
-		}
-		else {
-			Integer{ positive : false, content : vec!{-x as u32}}
-		}
-	}
-}
 
 // impl ToString for Integer {
 // 	fn to_string(&self) -> String {
@@ -165,70 +57,4 @@ impl From<i32> for Integer {
 // 		s
 // 	}
 // }
-
-impl fmt::Display for Integer {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
- 		// TODO: Actually implement this XXX
-		if self.is_zero() {
-			write!(f, "0")
-		}
-		else {
-			write!(f, "{}", self.content[0].to_string())
-		}
-	}
-}
-
-impl Ord for Integer {
-	fn cmp(&self, rhs: &Integer) -> Ordering {
-		fn helper( a : &Integer, b : &Integer) -> Ordering {
-			let a_s = a.size();
-			let b_s = b.size();
-			if a_s > b_s {
-				return Ordering::Greater
-			}
-			else if a_s < b_s {
-				return Ordering::Less
-			}
-
-			for i in (0..a_s).rev() {
-				let a_i = a.content[i];
-				let b_i = b.content[i];
-				if a_i > b_i {
-					return Ordering::Greater
-				}
-				else if a_i < b_i {
-					return Ordering::Less
-				}
-			}
-
-			Ordering::Equal
-		}
-
-		match ( self.positive, rhs.positive) {
-			(true, false) =>
-				Ordering::Greater,
-			(false, true) =>
-				Ordering::Less,
-			(true, true) =>
-				helper( self, rhs),
-			(false, false) =>
-				helper( self, rhs).reverse(),
-		}
-	}
-}
-
-impl PartialEq for Integer {
-	fn eq(&self, rhs : &Integer) -> bool {
-		self.cmp( rhs) == Ordering::Equal
-	}
-}
-
-impl Eq for Integer {
-}
-
-impl PartialOrd for Integer {
-	fn partial_cmp(&self, rhs: &Integer) -> Option<Ordering> {
-		Some( self.cmp( rhs))
-	}
-}
 

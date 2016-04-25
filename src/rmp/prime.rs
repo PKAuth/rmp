@@ -1,6 +1,6 @@
 use std::iter::Iterator;
 
-use rmp::types::Integer;
+use super::Integer;
 
 impl Integer {
 	/// Determine whether the integer is probably prime. 
