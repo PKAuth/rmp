@@ -14,13 +14,25 @@ impl Integer {
 	pub fn is_negative(&self) -> bool {
 		!self.positive
 	}
+
+	/// Mutable negation.
+	pub fn neg_m(&mut self) {
+		if !self.is_zero() {
+			self.positive = !self.positive
+		}
+	}
 }
 
 impl Neg for Integer {
 	type Output = Integer;
 
 	fn neg(self) -> Integer {
-		Integer{ positive : !self.positive, content : self.content}
+		if self.is_zero() {
+			self
+		}
+		else {
+			Integer{ positive : !self.positive, content : self.content}
+		}
 	}
 }
 

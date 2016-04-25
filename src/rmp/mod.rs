@@ -23,8 +23,7 @@ pub use self::sign::*;
 #[derive(Debug)]
 pub struct Integer {
 	content : Vec<Block>, // Blocks of the number. If number is 0, number of blocks is 0.
-	positive : bool,    // Whether the number is positive. 
-	// Maybe?? If number is 0, positive is true. If not, we need to change PartialEq.
+	positive : bool,      // Whether the number is positive. If number is 0, positive is true. 
 }
 
 pub type Block = u32; // Block
