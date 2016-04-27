@@ -20,7 +20,7 @@ pub use self::prime::*;
 pub use self::sign::*;
 
 // Data type for multi precision integers.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Integer {
 	content : Vec<Block>, // Blocks of the number. If number is 0, number of blocks is 0.
 	positive : bool,      // Whether the number is positive. If number is 0, positive is true. 

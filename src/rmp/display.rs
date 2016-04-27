@@ -4,13 +4,34 @@ use super::Integer;
 
 impl fmt::Display for Integer {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
- 		// TODO: Actually implement this XXX
+		// Check for 0.
 		if self.is_zero() {
-			write!(f, "0")
+			return write!(f, "0")
 		}
-		else {
-			write!(f, "{}", self.content[0].to_string())
+
+		let mut s : String = "".into();
+
+		let mut i : Integer = self.clone(); 
+		let mut rem : Integer;
+		
+		// Check if negative.
+		if self.is_negative() {
+			i.neg_m()
 		}
+
+		while i > Integer::from(0) {
+			let (it, remt) = i.div_mod( &Integer::from( 10));
+			i = it;
+			rem = remt;
+			let digit = if rem.is_zero() {"0".into()} else {rem.content[0].to_string()}; //{rem.content[0].to_string()};
+			s = format!( "{}{}", digit, s);
+		}
+
+		if self.is_negative() {
+			s = format!( "-{}", s);
+		}
+
+		write!(f, "{}", s)
 	}
 }
 

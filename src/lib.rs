@@ -72,10 +72,15 @@ mod tests {
 
 
 
-		println!("********** Hello world ************");
-		println!("{}", q);
-		println!("{}", r);
-		println!("{}", i16);
-		println!("{}", i0);
+		// println!("********** Hello world ************");
+		// println!("{}", q);
+		// println!("{}", r);
+		// println!("{}", i16);
+		// println!("{}", i0);
+		// println!("{}", Integer::from( -1));
+		// println!("{}", Integer::from( -10120));
+		// println!("{}", Integer::from( -18128));
+		// println!("{}", Integer::from( -1123123));
+		// assert!(false);
 	}
 }
