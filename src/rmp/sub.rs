@@ -1,9 +1,11 @@
-use rmp::types;
+use std::ops::{Sub, Neg};
+
+use super::Integer;
 
 impl Sub for Integer {
-	type Output = Integer
+	type Output = Integer;
 
 	fn sub( self, rhs : Integer) -> Integer {
-		panic!("TODO")
+		self + rhs.neg()
 	}
 }

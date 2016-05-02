@@ -43,6 +43,34 @@ mod tests {
 	}
 
 	#[test]
+	fn sub() {
+		let i0 = Integer::from(0);
+		let i00 = Integer::from(0);
+		let i000 = Integer::from(0);
+		assert!( i0 - i00 == i000);
+
+		let i1 = Integer::from(1);
+		let i01 = Integer::from(1);
+		let i0 = Integer::from(0);
+		assert!( i1 - i01 == i0);
+
+		let i0 = Integer::from(0);
+		let i1 = Integer::from(1);
+		let n1 = Integer::from(-1);
+		assert!( i0 - i1 == n1);
+
+		let i7 = Integer::from( 7);
+		let i84 = Integer::from( 84);
+		let n77 = Integer::from( -77);
+		assert!( i7 - i84 == n77);
+
+		let i7 = Integer::from( 7);
+		let i84 = Integer::from( 84);
+		let n77 = Integer::from( -77);
+		assert!( n77 + i84 == i7);
+	}
+
+	#[test]
 	fn even() {
 		assert!( Integer::from(0).is_even());
 		assert!( Integer::from(2).is_even());

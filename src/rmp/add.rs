@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
-use std::ops::{Add};
+use std::ops::{Add, Neg};
 
-// use super::internal;
+use super::internal::{pos_integer, neg_integer};
 use super::{Integer, Block};
 // use super::sign;
 
@@ -20,7 +20,7 @@ impl Add for Integer {
 				let (mut x, d) = lhs.content[i].overflowing_add( rhs.content[i]);
 
 				if c {
-					let (y, e) = lhs.content[i].overflowing_add( 1);
+					let (y, e) = x.overflowing_add( 1);
 					c = d || e;
 					x = y
 				}
@@ -29,7 +29,7 @@ impl Add for Integer {
 				}
 
 				cs.push( x);
-				i += 1
+				i += 1;
 			}
 
 			let (g,s) = if self_s > rhs_s { (lhs, self_s)} else { (rhs, rhs_s)};
@@ -45,11 +45,11 @@ impl Add for Integer {
 					c = false;
 				}
 
-				i += 1
+				i += 1;
 			}
 
 			if c {
-				cs.push( 1)
+				cs.push( 1);
 			}
 
 			cs
@@ -58,15 +58,59 @@ impl Add for Integer {
 		match ( self.is_positive(), rhs.is_positive()) {
 			(true, true) => {
 				let cs = add_positives( self, rhs);
-				Integer{ positive : true, content : cs}
+				pos_integer( cs)
 			},
 			(false, false) => {
 				let cs = add_positives( self, rhs);
-				Integer{ positive : false, content : cs}
+				neg_integer(cs)
 			},
-			_ =>
-				panic!("TODO"),
+			(true, false) =>
+				sub_positives( &self, &rhs.neg()),
+			(false, true) =>
+				sub_positives( &rhs, &self.neg()),
 		}
 	}
 }
 
+fn sub_positives( l : &Integer, r : &Integer) -> Integer {
+	let (b, s) = if l > r {(l, r)} else {(r, l)};
+
+	let mut cs = Vec::with_capacity( b.capacity()); // TODO: Improve this capacity?? Do we need to zero out memory? XXX
+	let mut c = false;
+	let mut i = 0;
+	while i < s.size() {
+		let (mut x, d) = b.content[i].overflowing_sub( s.content[i]);
+		
+		if c {
+			let ( y, e) = x.overflowing_sub( 1);
+			c = d || e;
+			x = y;
+		}
+		else {
+			c = d;
+		}
+
+		cs.push( x);
+		i += 1;
+	}
+
+	while i < b.size() {
+		let (x, e) = if c {b.content[i].overflowing_sub( 1)} else {(b.content[i], false)};
+		c = e;
+
+		// We can stop if there is no carry and x is 0.
+		if !c && x == 0 {
+			break;
+		}
+
+		cs.push( x);
+		i += 1;
+	}
+
+	if l > r {
+		pos_integer( cs)
+	}
+	else {
+		neg_integer( cs)
+	}
+}

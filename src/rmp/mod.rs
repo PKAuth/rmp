@@ -9,6 +9,7 @@ mod internal;
 mod ord;
 mod prime;
 mod sign;
+mod sub;
 
 // Re-exports.
 pub use self::add::*;
