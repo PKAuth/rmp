@@ -1,16 +1,89 @@
+extern crate rand;
+
 use std::iter::Iterator;
+use std::ops::{Sub, Add};
+use self::rand::OsRng;
+// use std::rand::OsRng;
 
 use super::Integer;
 
 impl Integer {
 	/// Determine whether the integer is probably prime. 
-	pub fn is_probably_prime(&self) -> bool {
+	pub fn is_probably_prime_r(&self, rng : &mut OsRng) -> bool {
+		// Note: Check for negatives and evens; less than 4?
+
 		// Check if integer is multiple of the earliest primes.
 		if FIRST_PRIMES.iter().any( |fp| {let p = Integer::from( *fp); p < *self && self.is_multiple_of( &p)}) {
 			return false
 		}
 
+		// Fermat primality test.
+		if !self.fermat_primality_test_r( 64, rng) {
+			return false
+		}
+
+		// Miller Rabin primality test.
+
 		panic!("TODO")
+	}
+
+	/// Perform (self ^ power mod base).
+	pub fn exp_mod( &self, power : &Integer, base : &Integer) -> Integer {
+		// TODO: Choose some k based on the power! XXX
+		let k = 4;
+
+		self.sliding_exp_mod( power, base, k)
+	}
+
+	// Algorithm 14.85 from Handbook of Applied Cryptography.
+	// k should be > 2
+	fn sliding_exp_mod( &self, e : &Integer, base : &Integer, k : usize) -> Integer {
+		// Note: Could compact this as we're not using the even ones, but that'd require an extra division by 2.
+		let i0 = Integer::from( 0);
+		let mut g = vec![ i0; k];
+
+		// Precompute g.
+		g[1] = self.clone(); // Note: Do we need to clone this?
+		g[2] = self.exp_pow2_mod( 1, &base);
+		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
+			g[2*i + 1] = g[2*i - 1].mult_mod( &g[2], &base);
+		}
+
+		let mut a = Integer::from( 1);
+		
+
+		panic!("TODO: iterate over bits of e")
+	}
+
+	// Compute self * 2^k mod base
+	fn exp_pow2_mod( &self, k : usize, base : &Integer) -> Integer {
+		panic!("TODO")
+	}
+
+	/// Compute self * rhs mod base.
+	pub fn mult_mod( &self, rhs : &Integer, base : &Integer) -> Integer {
+		panic!("TODO")
+	}
+
+	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
+	fn fermat_primality_test_r( &self, k : usize, rng : &mut OsRng) -> bool {
+		if k <= 0 {
+			return true
+		}
+
+		let i1 : Integer = Integer::from( 1);
+		let i2 : Integer = Integer::from( 2);
+		let i3 : Integer = Integer::from( 3);
+
+		// Generate a in [2,p-2]
+		let a = Integer::random( self.minus( &i3), rng).plus( &i2);
+
+		if a.exp_mod( &self.minus( &i1), self) != i1 {
+			false
+		}
+		else {
+			self.fermat_primality_test_r( k - 1, rng)
+		}
 	}
 }
 

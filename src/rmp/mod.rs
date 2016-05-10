@@ -8,6 +8,7 @@ mod from;
 mod internal;
 mod ord;
 mod prime;
+mod random;
 mod sign;
 mod sub;
 

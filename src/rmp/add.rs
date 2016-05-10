@@ -5,6 +5,12 @@ use super::internal::{pos_integer, neg_integer};
 use super::{Integer, Block};
 // use super::sign;
 
+impl Integer {
+	pub fn plus( &self, rhs : &Integer) -> Integer {
+		panic!("TODO")
+	}
+}
+
 impl Add for Integer {
 	type Output = Integer;
 
