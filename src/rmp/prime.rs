@@ -1,11 +1,13 @@
 extern crate rand;
 
+use std::cmp::{min};
 use std::iter::Iterator;
 use std::ops::{Sub, Add};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
-use super::Integer;
+use super::{Integer, Block, BLOCK_SIZE};
+use super::internal::{get_bit, get_bits};
 
 impl Integer {
 	/// Determine whether the integer is probably prime. 
@@ -36,8 +38,34 @@ impl Integer {
 	}
 
 	// Algorithm 14.85 from Handbook of Applied Cryptography.
-	// k should be > 2
+	// k should be > 2, < BLOCK_SIZE
 	fn sliding_exp_mod( &self, e : &Integer, base : &Integer, k : usize) -> Integer {
+		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( usize, Block) {
+			let mut c = min( i + 1, k);
+
+			// Get c bits from e[b].
+			let mut str = get_bits( e[b], i, c);
+
+			// Check if we need next block.
+			if b != 0 && k != c {
+				let secondC = k - c;
+				str = str << secondC | get_bits( e[b-1], 31, secondC);
+
+				c = k;
+			}
+
+			while c > 1 {
+				if str & 1 == 1 {
+					break;
+				}
+
+				str = str >> 1;
+				c = c - 1;
+			}
+
+			(c as usize, str)
+		}
+
 		// Note: Could compact this as we're not using the even ones, but that'd require an extra division by 2.
 		let i0 = Integer::from( 0);
 		let mut g = vec![ i0; k];
@@ -50,9 +78,32 @@ impl Integer {
 		}
 
 		let mut a = Integer::from( 1);
-		
 
-		panic!("TODO: iterate over bits of e")
+		// Iterate over bits of e.
+		let mut i = BLOCK_SIZE - e.leading_zeros() - 1; // 0 <= i <= 31
+		for b in (0..e.size()).rev() {
+			while i >= 0 {
+				let e_i = get_bit( e.content[b], i);
+
+				if e_i == 0 {
+					a = a.exp_pow2_mod( 1, &base);
+					i = i - 1;
+				}
+				else if e_i == 1 {
+					let (str, len) = longest_bitstring( &e.content, b, i, k as Block);
+					a = a.exp_pow2_mod( len as usize, &base).mult_mod( &g[str], &base);
+					i = i - len;
+				}
+				else {
+					panic!("sliding_exp_mod: bit is not 0 or 1.")
+				}
+			}
+
+			// Reset i for next block.
+			i = i + BLOCK_SIZE;
+		}
+		
+		a
 	}
 
 	// Compute self * 2^k mod base

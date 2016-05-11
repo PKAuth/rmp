@@ -44,5 +44,23 @@ impl Integer {
 	pub fn capacity(&self) -> usize {
 		self.content.capacity()
 	}
+
+	// Get the number of leading zeros in the most significant block.
+	#[inline(always)]
+	pub fn leading_zeros( &self) -> Block {
+		self.content[self.size() - 1].leading_zeros()
+	}
+}
+
+// Get the ith bit of x. 0 is lsb.
+#[inline(always)]
+pub fn get_bit( x : Block, i : Block) -> Block {
+	(x >> i) & 1
+}
+
+// Get n bits of x, starting at i (towards the lsb). 0 is lsb.
+#[inline(always)]
+pub fn get_bits( x : Block, i : Block, n : Block) -> Block {
+	(x >> (i - n + 1)) & ((1 << n) - 1)
 }
 
