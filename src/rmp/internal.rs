@@ -64,3 +64,15 @@ pub fn get_bits( x : Block, i : Block, n : Block) -> Block {
 	(x >> (i - n + 1)) & ((1 << n) - 1)
 }
 
+// Coerce to a Block. Panics if out of range.
+pub fn to_block( x : &Integer) -> Block {
+	if x < &Integer::from( 0) || x > &Integer::from( Block::max_value()) {
+		panic!( "toBlock: Invalid Integer")
+	}
+	else if x.is_zero() {
+		0
+	}
+	else {
+		x.content[0]
+	}
+}

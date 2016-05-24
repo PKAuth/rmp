@@ -6,9 +6,12 @@ mod display;
 mod div;
 mod from;
 mod internal;
+mod mul;
+// mod one;
 mod ord;
 mod prime;
 mod random;
+mod shift;
 mod sign;
 mod sub;
 
@@ -17,8 +20,11 @@ pub use self::add::*;
 pub use self::display::*;
 pub use self::div::*;
 pub use self::from::*;
+pub use self::mul::*;
+// pub use self::one::*;
 pub use self::ord::*;
 pub use self::prime::*;
+pub use self::shift::*;
 pub use self::sign::*;
 
 // Data type for multi precision integers.

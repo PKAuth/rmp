@@ -6,7 +6,15 @@ use super::{Integer, Block};
 // use super::sign;
 
 impl Integer {
+	// Borrowed addition.
 	pub fn plus( &self, rhs : &Integer) -> Integer {
+		let mut r = self.clone();
+		r.plus_mut( rhs);
+		r
+	}
+
+	// Mutable borrowed addition.
+	pub fn plus_mut( &mut self, rhs : &Integer) {
 		panic!("TODO")
 	}
 }

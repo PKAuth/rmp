@@ -91,7 +91,7 @@ impl Integer {
 				}
 				else if e_i == 1 {
 					let (str, len) = longest_bitstring( &e.content, b, i, k as Block);
-					a = a.exp_pow2_mod( len as usize, &base).mult_mod( &g[str], &base);
+					a = a.exp_pow2_mod( len, &base).mult_mod( &g[str], &base);
 					i = i - len;
 				}
 				else {
@@ -107,13 +107,17 @@ impl Integer {
 	}
 
 	// Compute self * 2^k mod base
-	fn exp_pow2_mod( &self, k : usize, base : &Integer) -> Integer {
-		panic!("TODO")
+	fn exp_pow2_mod( &self, k : Block, base : &Integer) -> Integer {
+		// Note: Can this be improved??
+		let x : Integer = self.shl_borrow( &Integer::from( k));
+		x.modulus( base)
 	}
 
 	/// Compute self * rhs mod base.
 	pub fn mult_mod( &self, rhs : &Integer, base : &Integer) -> Integer {
-		panic!("TODO")
+		// Note: Are there faster techniques? 
+		let r = self.modulus( base) * rhs.modulus( base);
+		r.modulus( base)
 	}
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
