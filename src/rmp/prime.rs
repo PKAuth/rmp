@@ -140,6 +140,23 @@ impl Integer {
 			self.fermat_primality_test_r( k - 1, rng)
 		}
 	}
+
+	// Input must be greater than 3.
+	fn miller_rabin_primality_test( &self) -> bool {
+		// Check if even.
+		if self.is_even() {
+			return false
+		}
+
+		panic!("TODO")
+	}
+}
+
+fn miller_rabin_get_rd( x : &Integer) -> (Integer, Integer) {
+	let r = x.trailing_zeros();
+	let d = x.shr_borrow( &r);
+
+	(r, d)
 }
 
 // From: https://primes.utm.edu/lists/small/1000.txt

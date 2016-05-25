@@ -14,6 +14,7 @@ impl Integer {
 		a.modulus( self).is_zero()
 	}
 
+	// Returns the quotient and remainder.
 	pub fn div_mod(&self, rhs : &Integer) -> (Integer, Integer) {
 		// Check for div by 0.
 		if rhs.is_zero() {

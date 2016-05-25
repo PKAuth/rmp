@@ -111,4 +111,15 @@ mod tests {
 		// println!("{}", Integer::from( -1123123));
 		// assert!(false);
 	}
+
+	#[test]
+	fn shr() {
+		let i6 = Integer::from( 6);
+		let i2 = Integer::from( 2);
+		let i3 = Integer::from( 3);
+		let i1 = Integer::from( 1);
+		// println!("{}", i2.shr_borrow( &i1));
+		assert!( i2.shr_borrow( &i1) == i1);
+		assert!( i6.shr_borrow( &i1) == i3);
+	}
 }

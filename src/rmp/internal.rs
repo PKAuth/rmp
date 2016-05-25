@@ -1,12 +1,13 @@
 // Module with internal helper functions.
 
-use super::{Block, LongBlock, Integer};
+use super::{Block, LongBlock, Integer, BLOCK_SIZE};
 
 pub fn remove_leading_zeroes( v : &mut Vec<Block>) {
     while v.len() > 0 && v[v.len() - 1] == 0 {
         v.pop();
     }
 }
+
 pub fn pos_integer( mut v : Vec<Block>) -> Integer {
 	remove_leading_zeroes( &mut v);
 
@@ -45,10 +46,26 @@ impl Integer {
 		self.content.capacity()
 	}
 
-	// Get the number of leading zeros in the most significant block.
+	// Get the number of leading zeros in the binary of the most significant block.
 	#[inline(always)]
 	pub fn leading_zeros( &self) -> Block {
 		self.content[self.size() - 1].leading_zeros()
+	}
+
+	// Get the number of trailing zeros in the binary representation.
+	pub fn trailing_zeros( &self) -> Integer {
+		let mut c = Integer::from( 0);
+
+		for b in &self.content {
+			let trailing = b.trailing_zeros();
+			c.plus_mut( &Integer::from( trailing));
+
+			if trailing != BLOCK_SIZE {
+				return c
+			}
+		}
+
+		c
 	}
 }
 
@@ -67,12 +84,38 @@ pub fn get_bits( x : Block, i : Block, n : Block) -> Block {
 // Coerce to a Block. Panics if out of range.
 pub fn to_block( x : &Integer) -> Block {
 	if x < &Integer::from( 0) || x > &Integer::from( Block::max_value()) {
-		panic!( "toBlock: Invalid Integer")
+		panic!( "to_block: Invalid Integer")
 	}
 	else if x.is_zero() {
 		0
 	}
 	else {
 		x.content[0]
+	}
+}
+
+// Coerce to a usize. Panics if out of range.
+pub fn to_usize( x : &Integer) -> usize {
+	// TODO: Implement this check. XXX
+	// if x < &Integer::from( 0) || x > &Integer::from( usize::max_value()) {
+	// 	panic!( "to_usize: Invalid Integer")
+	// }
+	if x.is_zero() {
+		0
+	}
+	else {
+		let mut r : usize = 0;
+
+		for i in 0..x.size() {
+			let b = x.content[i] as usize;
+			match r.checked_add( b) {
+				Some( next) => 
+					r = next,
+				Nothing =>
+					break,
+			}
+		}
+
+		r
 	}
 }
