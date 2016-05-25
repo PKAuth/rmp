@@ -19,7 +19,7 @@ impl Integer {
 		let mut i = Integer::from( 0);
 		while i < emptyBlockC {
 			v.push( 0);
-			i.plus_mut( &Integer::from( 1))
+			i.add_mut( &Integer::from( 1))
 		}
 
 		// Shift the existing blocks.

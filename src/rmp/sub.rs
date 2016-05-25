@@ -3,7 +3,13 @@ use std::ops::{Sub, Neg};
 use super::Integer;
 
 impl Integer {
-	pub fn minus( &self, rhs : &Integer) -> Integer {
+	// Borrowed subtraction.
+	pub fn sub_borrow( &self, rhs : &Integer) -> Integer {
+		panic!("TODO")
+	}
+
+	// Mutable borrowed subtraction.
+	pub fn sub_mut( &mut self, rhs : &mut Integer) -> Integer {
 		panic!("TODO")
 	}
 }

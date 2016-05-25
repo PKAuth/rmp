@@ -130,9 +130,9 @@ impl Integer {
 		let i3 : Integer = Integer::from( 3);
 
 		// Generate a in [2,p-2]
-		let a = Integer::random( self.minus( &i3), rng).plus( &i2);
+		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
-		if a.exp_mod( &self.minus( &i1), self) != i1 {
+		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
 			false
 		}
 		else {
@@ -152,14 +152,14 @@ impl Integer {
 		let i3 : Integer = Integer::from( 3);
 
 		// Get r and d where self-1 = d*2^r. 
-		let nm1 = self.minus( &i1);
+		let nm1 = self.sub_borrow( &i1);
 		let r = nm1.trailing_zeros();
 		let d = nm1.shr_borrow( &r);
 
 		// Repeat k times.
 		'outer: for i in 0..k {
 			// Generate a in [2,p-2]
-			let a = Integer::random( self.minus( &i3), rng).plus( &i2);
+			let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
 			let mut x = a.exp_mod( &d, self);
 			if x == i1 || x == nm1 {
@@ -177,7 +177,7 @@ impl Integer {
 					continue 'outer
 				}
 
-				j.plus_mut( &i1);
+				j.add_mut( &i1);
 			}
 
 			return false

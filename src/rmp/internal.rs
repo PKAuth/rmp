@@ -58,7 +58,7 @@ impl Integer {
 
 		for b in &self.content {
 			let trailing = b.trailing_zeros();
-			c.plus_mut( &Integer::from( trailing));
+			c.add_mut( &Integer::from( trailing));
 
 			if trailing != BLOCK_SIZE {
 				return c
