@@ -122,4 +122,15 @@ mod tests {
 		assert!( i2.shr_borrow( &i1) == i1);
 		assert!( i6.shr_borrow( &i1) == i3);
 	}
+
+	#[test]
+	fn shl() {
+		let i6 = Integer::from( 6);
+		let i2 = Integer::from( 2);
+		let i3 = Integer::from( 3);
+		let i1 = Integer::from( 1);
+
+		assert!( i1.shl_borrow( &i1) == i2);
+		assert!( i3.shl_borrow( &i1) == i6);
+	}
 }

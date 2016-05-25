@@ -25,8 +25,7 @@ impl Integer {
 		}
 
 		// Miller Rabin primality test.
-
-		panic!("TODO")
+		self.miller_rabin_primality_test_r( 32, rng)
 	}
 
 	/// Perform (self ^ power mod base).
@@ -142,22 +141,52 @@ impl Integer {
 	}
 
 	// Input must be greater than 3.
-	fn miller_rabin_primality_test( &self) -> bool {
+	fn miller_rabin_primality_test_r( &self, k : usize, rng : &mut OsRng) -> bool {
 		// Check if even.
 		if self.is_even() {
 			return false
 		}
 
-		panic!("TODO")
+		let i1 : Integer = Integer::from( 1);
+		let i2 : Integer = Integer::from( 2);
+		let i3 : Integer = Integer::from( 3);
+
+		// Get r and d where self-1 = d*2^r. 
+		let nm1 = self.minus( &i1);
+		let r = nm1.trailing_zeros();
+		let d = nm1.shr_borrow( &r);
+
+		// Repeat k times.
+		'outer: for i in 0..k {
+			// Generate a in [2,p-2]
+			let a = Integer::random( self.minus( &i3), rng).plus( &i2);
+
+			let mut x = a.exp_mod( &d, self);
+			if x == i1 || x == nm1 {
+				continue;
+			}
+
+			// Repeat r - 1 times.
+			let mut j = i1.clone();
+			while j < r {
+				x = x.mul_borrow( &x).modulus( self);
+				if x == i1 {
+					return false
+				}
+				else if x == nm1 {
+					continue 'outer
+				}
+
+				j.plus_mut( &i1);
+			}
+
+			return false
+		}
+
+		return true
 	}
 }
 
-fn miller_rabin_get_rd( x : &Integer) -> (Integer, Integer) {
-	let r = x.trailing_zeros();
-	let d = x.shr_borrow( &r);
-
-	(r, d)
-}
 
 // From: https://primes.utm.edu/lists/small/1000.txt
 // TODO: Can this be improved? Make a [Integer] instead? XXX
