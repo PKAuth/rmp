@@ -15,6 +15,13 @@ impl Integer {
 		!self.positive
 	}
 
+	/// Borrowed negation.
+	pub fn neg_borrow( &self) -> Integer {
+		let mut r = self.clone();
+		r.neg_m();
+		r
+	}
+
 	/// Mutable negation.
 	pub fn neg_m(&mut self) {
 		if !self.is_zero() {
@@ -27,12 +34,9 @@ impl Neg for Integer {
 	type Output = Integer;
 
 	fn neg(self) -> Integer {
-		if self.is_zero() {
-			self
-		}
-		else {
-			Integer{ positive : !self.positive, content : self.content}
-		}
+		let mut r = self;
+		r.neg_m();
+		r
 	}
 }
 
