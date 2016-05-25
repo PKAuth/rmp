@@ -16,7 +16,7 @@ impl fmt::Display for Integer {
 		
 		// Check if negative.
 		if self.is_negative() {
-			i.neg_m()
+			i.neg_mut()
 		}
 
 		while i > Integer::from(0) {
