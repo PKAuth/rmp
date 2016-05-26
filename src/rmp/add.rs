@@ -127,31 +127,22 @@ fn add_positives_mut( lhs : &mut Integer, rhs : &Integer) {
 		i += 1;
 	}
 
-	// Check if lhs length is longer than rhs length.
-	if self_s >= rhs_s {
-		while i < self_s && c {
-			let (y, e) = lhs.content[i].overflowing_add( 1);
-			lhs.content[i] = y;
-			c = e;
-
-			i += 1;
-		}
-	}
-	else {
-		while i < rhs_s {
-			if c {
-				let (y, e) = rhs.content[i].overflowing_add( 1);
-				lhs.content.push( y);
-				c = e;
-			}
-			else {
-				lhs.content.push( rhs.content[i]);
-			}
-
-			i += 1;
-		}
+	// If rhs length is longer than lhs length, copy over remaining blocks. 
+	if rhs_s > self_s {
+		lhs.content.extend( &rhs.content[i..]);
 	}
 
+	// Finish any carries.
+	let self_s = lhs.size();
+	while c && i < self_s {
+		let (y, e) = lhs.content[i].overflowing_add( 1);
+		lhs.content[i] = y;
+		c = e;
+
+		i += 1;
+	}
+
+	// Check for last carry.
 	if c {
 		lhs.content.push( 1);
 	}
