@@ -2,6 +2,16 @@
 
 use super::{Block, LongBlock, Integer, BLOCK_SIZE};
 
+pub fn normalize_leading_zeroes( v : &mut Integer) {
+	while v.size() > 0 && v.content[v.size() - 1] == 0 {
+		v.content.pop();
+	}
+
+	if v.size() == 0 {
+		v.positive = true;
+	}
+}
+
 pub fn remove_leading_zeroes( v : &mut Vec<Block>) {
     while v.len() > 0 && v[v.len() - 1] == 0 {
         v.pop();

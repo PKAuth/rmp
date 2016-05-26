@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 use std::ops::{Add, Neg};
 
-use super::internal::{pos_integer, neg_integer};
+use super::internal::{pos_integer, neg_integer, normalize_leading_zeroes};
 use super::{Integer, Block};
 // use super::sign;
 
@@ -146,5 +146,8 @@ fn add_positives_mut( lhs : &mut Integer, rhs : &Integer) {
 	if c {
 		lhs.content.push( 1);
 	}
+
+	// Normalize integer.
+	normalize_leading_zeroes( lhs);
 }
 
