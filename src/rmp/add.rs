@@ -23,10 +23,20 @@ impl Integer {
 				add_positives_mut( self, rhs);
 			},
 			(true, false) => {
-				panic!("TODO")
+				// Set sign.
+				self.neg_mut();
+				let swap = (self as &Integer) <= rhs;
+				self.positive = swap;
+
+				sub_positives_mut( self, rhs, swap);
 			},
 			(false, true) => {
-				panic!("TODO")
+				// Set sign.
+				self.neg_mut();
+				let swap = (self as &Integer) >= rhs;
+				self.positive = (self as &Integer) <= rhs;
+
+				sub_positives_mut( self, rhs, swap);
 			},
 		}
 	}
@@ -39,64 +49,58 @@ impl Add for Integer {
 		let mut r = self;
 		r.add_mut( &rhs);
 		r
-		// match ( self.is_positive(), rhs.is_positive()) {
-		// 	(true, true) => {
-		// 		let cs = add_positives( self, rhs);
-		// 		pos_integer( cs)
-		// 	},
-		// 	(false, false) => {
-		// 		let cs = add_positives( self, rhs);
-		// 		neg_integer(cs)
-		// 	},
-		// 	(true, false) =>
-		// 		sub_positives( &self, &rhs.neg()),
-		// 	(false, true) =>
-		// 		sub_positives( &rhs, &self.neg()),
-		// }
 	}
 }
 
-fn sub_positives( l : &Integer, r : &Integer) -> Integer {
-	let (b, s) = if l > r {(l, r)} else {(r, l)};
+fn sub_positives_mut( lhs : &mut Integer, rhs : &Integer, swap : bool) {
+	#[inline(always)]
+	fn get( x : &Integer, i : usize) -> Block {
+		match x.content.get(i) {
+			Some( b) => *b,
+			Nothing => 0,
+		}
+	}
 
-	let mut cs = Vec::with_capacity( b.capacity()); // TODO: Improve this capacity?? Do we need to zero out memory? XXX
 	let mut c = false;
-	let mut i = 0;
-	while i < s.size() {
-		let (mut x, d) = b.content[i].overflowing_sub( s.content[i]);
-		
+	let end = max( lhs.size(), rhs.size());
+
+	for i in 0..end {
+		let lit = get( lhs, i);
+		let rit = get( rhs, i);
+
+		// Swap if negative.
+		let ( li, ri) = if swap {( lit, rit)} else {( rit, lit)};
+
+		let (mut x, d) = li.overflowing_sub( ri);
 		if c {
 			let ( y, e) = x.overflowing_sub( 1);
 			c = d || e;
 			x = y;
 		}
 		else {
-			c = d;
+			c = d
 		}
 
-		cs.push( x);
-		i += 1;
-	}
+		// We can stop if we are past the shortest arg and there is no carry and x is 0.
+		// if i >= ??? && !c && x == 0 {
+		// 	panic("TODO: Check if swap. Copy over blocks (including i)")
+		// 	if swap {
+		// 		lhs.extend( &rhs[i..]);
+		// 	}
 
-	while i < b.size() {
-		let (x, e) = if c {b.content[i].overflowing_sub( 1)} else {(b.content[i], false)};
-		c = e;
+		// 	break;
+		// };
 
-		// We can stop if there is no carry and x is 0.
-		if !c && x == 0 {
-			break;
+		if i < lhs.size() {
+			lhs.content[i] = x;
 		}
-
-		cs.push( x);
-		i += 1;
+		else {
+			lhs.content.push( x);
+		}
 	}
 
-	if l > r {
-		pos_integer( cs)
-	}
-	else {
-		neg_integer( cs)
-	}
+	// Normalize integer.
+	normalize_leading_zeroes( lhs);
 }
 
 fn add_positives_mut( lhs : &mut Integer, rhs : &Integer) {

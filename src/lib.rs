@@ -57,7 +57,11 @@ mod tests {
 		let i0 = Integer::from(0);
 		let i1 = Integer::from(1);
 		let n1 = Integer::from(-1);
-		assert!( i0 - i1 == n1);
+		assert!( i0.clone() - i1.clone() == n1.clone());
+
+		assert!( i0.clone() - i0.clone() == i0.clone());
+		assert!( i1.clone() - i1.clone() == i0.clone());
+		assert!( n1.clone() - n1.clone() == i0.clone());
 
 		let i7 = Integer::from( 7);
 		let i84 = Integer::from( 84);
@@ -67,6 +71,7 @@ mod tests {
 		let i7 = Integer::from( 7);
 		let i84 = Integer::from( 84);
 		let n77 = Integer::from( -77);
+		println!("{}", n77.clone() + i84.clone());
 		assert!( n77 + i84 == i7);
 	}
 
