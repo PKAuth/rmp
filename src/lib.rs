@@ -71,7 +71,6 @@ mod tests {
 		let i7 = Integer::from( 7);
 		let i84 = Integer::from( 84);
 		let n77 = Integer::from( -77);
-		println!("{}", n77.clone() + i84.clone());
 		assert!( n77 + i84 == i7);
 	}
 
@@ -137,5 +136,20 @@ mod tests {
 
 		assert!( i1.shl_borrow( &i1) == i2);
 		assert!( i3.shl_borrow( &i1) == i6);
+	}
+
+	#[test]
+	fn mul() {
+		let i3 = Integer::from( 3);
+		let i1 = Integer::from( 1);
+		let i0 = Integer::from( 0);
+		let n3 = Integer::from( 3);
+		let n1 = Integer::from( 1);
+
+		assert!( i1.clone() * i3.clone() == i3.clone());
+		assert!( i0.clone() * i1.clone() == i0.clone());
+		assert!( i1.clone() * n1.clone() == n1.clone());
+		assert!( n1.clone() * n3.clone() == i3.clone());
+		assert!( n1.clone() * i3.clone() == n3.clone());
 	}
 }

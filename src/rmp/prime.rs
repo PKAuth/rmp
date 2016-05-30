@@ -169,7 +169,7 @@ impl Integer {
 			// Repeat r - 1 times.
 			let mut j = i1.clone();
 			while j < r {
-				x = x.mul_borrow( &x).modulus( self);
+				x = x.mul_borrow( &x).modulus( self); // TODO: use sqr_mut XXX
 				if x == i1 {
 					return false
 				}
