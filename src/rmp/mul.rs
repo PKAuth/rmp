@@ -50,7 +50,7 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 	res
 }
 
-// From: The Art of Computer Programming - Volume 2 by Knuth.
+// From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
 fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	// Init result with 0s.
 	let mut res : Vec<Block> = Vec::with_capacity( lhs.size() + rhs.size() + 1);
