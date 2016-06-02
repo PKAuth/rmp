@@ -115,6 +115,7 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 	let r = pos_integer( rn);
 
 	// TODO: mut shiftr XXX
+	let r = r.shr_borrow( &s);
 
 	(q, r)
 }
