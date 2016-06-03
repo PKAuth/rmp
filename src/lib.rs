@@ -159,15 +159,17 @@ mod tests {
 	fn div_alg_d() {
 		let i0 = Integer::from( 0);
 		let i1 = Integer::from( 1);
+		let i2 = Integer::from( 2);
 		let im = Integer::from( u32::max_value());
 		let i32 = Integer::from( 32);
 		let i11 = (i1.clone() << i32.clone()) + i1.clone();
 		let imm = (im.clone() << i32.clone()) + im.clone();
-		let immm = imm.clone() + im.clone();
-		let immmm = immm.clone() + im.clone();
+		let immm = (imm.clone() << i32.clone()) + im.clone();
+		let immmm = (immm.clone() << i32.clone()) + im.clone();
 
 		let i3 = Integer::from( 3);
-		let i4294967293 = im.clone() - i3;
+		let i18446744069414584320 = im.clone() << i32.clone();
+		let i79228162495817593524129366015 = ((im.clone() << i32.clone()) << i32.clone()) + im.clone();
 
 		// test div_mod_u_n_1
 		let (q, r) = immm.div_mod( &i1);
@@ -175,17 +177,28 @@ mod tests {
 		assert!( r == i0);
 
 		let (q, r) = imm.div_mod( &i11);
-		// println!( "q:{}", q);
-		// println!( "r:{}", r);
+		// // println!( "q:{}", q);
+		// // println!( "r:{}", r);
 		assert!( q == im);
 		assert!( r == i0);
+
+		let (q, r) = immm.div_mod( &i11);
+		// println!( "q:{}", q);
+		// println!( "r:{}", r);
+		assert!( q == i18446744069414584320); // 18446744069414584320
+		assert!( r == im); // 4294967295
 
 		// println!("{}/{}", immmm, i11);
 
 		let (q, r) = immmm.div_mod( &i11);
-		println!( "q:{}", q);
-		println!( "r:{}", r);
-		assert!( q == im);
-		assert!( r == i4294967293);
+		// println!( "q:{}", q);
+		// println!( "r:{}", r);
+		// println!( "i:{}", i79228162495817593524129366015);
+		assert!( q == i79228162495817593524129366015); // 79228162495817593524129366015
+		assert!( r == i0); // 0
+
+		let (q, r) = i79228162495817593524129366015.div_mod( &i18446744069414584320);
+		assert!( q == im.clone() + i1.clone());
+		assert!( r == im);
 	}
 }

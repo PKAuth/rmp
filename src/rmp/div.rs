@@ -71,20 +71,18 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 
 	let mut quot : Vec<Block> = vec![0; ln.len()];
 
-//	println!("s: {}", s);
-//	for i in 0..ln.len() {
-//		println!("ri: {:0b}", ln[i]);
-//	}
-//
 	let r_end : LongBlock = rn[rn.len() - 1] as LongBlock;
 	let r_end2 : LongBlock = rn[rn.len() - 2] as LongBlock;
 	let bm1 : LongBlock = Block::max_value() as LongBlock;
-	for j in (0..ln.len() - rn.len()).rev() { // + 1 ... add 1 if shifting didn't add??
-		// Note: Check if u_j == v_end??
+	let n = rhs.size();
+	if lhs.size() == ln.len() {
+		ln.push( 0);
+	}
 
-		let lj : LongBlock = ln[j] as LongBlock;
-		let lj1 : LongBlock = if j <= 0 {0} else {ln[j-1] as LongBlock};
-		let lj2 : LongBlock = if j <= 1 {0} else {ln[j-2] as LongBlock};
+	for j in (0..lhs.size() - n + 1).rev() {
+		let lj : LongBlock = ln[n+j] as LongBlock;
+		let lj1 : LongBlock = ln[n+j-1] as LongBlock;
+		let lj2 : LongBlock = ln[n+j-2] as LongBlock;
 		let mut qhat : LongBlock = (mul_b( lj) + lj1) / r_end;
 		if qhat > bm1 {
 			qhat = bm1;
@@ -94,30 +92,28 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 			qhat = qhat - 1;
 		}
 
-		println!("{}: {}:", j, qhat);
-
 		let mut k : SignedLongBlock = 0;
 		let mask = Block::max_value() as LongBlock;
-		for i in 0..rn.len() {
+		for i in 0..n {
 			let p : LongBlock = qhat * (rn[i] as LongBlock);
 			let t : SignedLongBlock = (ln[i+j] as SignedLongBlock) - k - ((p & mask) as SignedLongBlock);
 			ln[i+j] = t as Block;
 			k = ((p >> (BLOCK_SIZE as LongBlock)) as SignedLongBlock) - (t >> (BLOCK_SIZE as SignedLongBlock));
 		}
 
-		let t : SignedLongBlock = (ln[rn.len()+j] as SignedLongBlock) - k;
-		ln[rn.len()+j] = t as Block;
+		let t : SignedLongBlock = (ln[n+j] as SignedLongBlock) - k;
+		ln[n+j] = t as Block;
 
 		quot[j] = qhat as Block; // TODO: this is probably wrong??
 		if t < 0 {
 			quot[j] = quot[j] - 1;
 			let mut k : LongBlock = 0;
-			for i in 0..rn.len() {
+			for i in 0..n {
 				let t : LongBlock = (ln[i + j] as LongBlock) + (rn[i] as LongBlock) + k;
 				ln[i + j] = t as Block;
 				k = t >> (BLOCK_SIZE as LongBlock);
 			}
-			ln[rn.len() + j] = ln[rn.len() + j] + (k as Block);
+			ln[n + j] = ln[n + j] + (k as Block);
 		}
 	}
 
