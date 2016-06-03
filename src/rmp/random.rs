@@ -11,7 +11,7 @@ impl Integer {
 		// Note: Check if n <= 0?
 
 		// Generate random blocks.
-		let mut b = random_blocks( n.size(), rng);
+		let mut b = random_vec_blocks( n.size(), rng);
 
 		// Mask out upper bits from n.
 		let end = n.size() - 1;
@@ -31,14 +31,19 @@ impl Integer {
 		}
 	}
 
+	/// Generate a uniformly random Integer with n blocks.
+	pub fn random_blocks( b : usize, rng : &mut OsRng) -> Integer {
+		pos_integer( random_vec_blocks( b, rng))
+	}
+
 }
 
 // Generate a uniformly random vector with n blocks. 
-fn random_blocks( n : usize, rng : &mut OsRng) -> Vec<Block> {
+fn random_vec_blocks( n : usize, rng : &mut OsRng) -> Vec<Block> {
 	let mut r = Vec::with_capacity( n);
 
 	for i in 0..n {
-		r[i] = rng.gen();
+		r.push( rng.gen());
 	}
 
 	r

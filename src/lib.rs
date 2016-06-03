@@ -7,7 +7,10 @@ pub mod rmp;
 
 #[cfg(test)]
 mod tests {
+	extern crate rand;
+	
 	use rmp::Integer;
+	use self::rand::OsRng;
 
 	#[test]
 	fn equal() {
@@ -200,5 +203,14 @@ mod tests {
 		let (q, r) = i79228162495817593524129366015.div_mod( &i18446744069414584320);
 		assert!( q == im.clone() + i1.clone());
 		assert!( r == im);
+	}
+
+	#[test]
+	fn prime() {
+		let mut r = OsRng::new().unwrap();
+		
+		println!("{}", Integer::generate_prime(2, &mut r));
+
+		assert!(false);
 	}
 }

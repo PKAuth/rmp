@@ -10,6 +10,23 @@ use super::{Integer, Block, BLOCK_SIZE};
 use super::internal::{get_bit, get_bits};
 
 impl Integer {
+	/// Generate a prime number of size BLOCK_SIZE * b;
+	pub fn generate_prime( b : usize, rng : &mut OsRng) -> Integer {
+		let mut p = Integer::random_blocks( b, rng);
+
+		if p.is_even() {
+			let i1 = Integer::from( 1);
+			p.add_mut( &i1);
+		}
+
+		let i2 = Integer::from( 2);
+		while !p.is_probably_prime_r( rng) {
+			p.add_mut( &i2);
+		}
+
+		p
+	}
+
 	/// Determine whether the integer is probably prime. 
 	pub fn is_probably_prime_r(&self, rng : &mut OsRng) -> bool {
 		// Note: Check for negatives and evens; less than 4?
