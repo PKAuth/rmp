@@ -23,7 +23,7 @@ impl Integer {
 
 		// TODO: check other base conditions here... XXX
 
-		let (mut q, mut r) = div_mod_u( &self.content, &rhs.content);
+		let (mut q, mut r) = div_mod_positives( &self, &rhs);
 		match ( self.is_positive(), rhs.is_positive()) {
 			(true, true) => {
 				(q, r)
@@ -43,46 +43,58 @@ impl Integer {
 	}
 }
 
-// Divide and mod an unsigned integer.
-fn div_mod_u( u : &Vec<Block>, v : &Vec<Block>) -> ( Integer, Integer) {
+// Divide and mod a (positive) integer.
+fn div_mod_positives( u : &Integer, v : &Integer) -> ( Integer, Integer) {
 	// Check if u is shorter than v.
-	if u.len() < v.len() {
+	if u.size() < v.size() {
 		// return (Integer::From(0), u.content)
 		panic!("TODO")
 	}
 
 	// Check for Nx1.
-	if v.len() == 1 {
-		return div_mod_u_n_1( u, v[0])
+	if v.size() == 1 {
+		return div_mod_u_n_1( &u.content, v.content[0])
 	}
 
-	// TODO: various algorithms dependent on the size of inputs. XXX
-	panic!("TODO")
 
+	// TODO: various algorithms dependent on the size of inputs. XXX
+	div_mod_base_case_positives( u, v)
 }
 
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm D.
+// Referenced: Hacker's Delight, Second Edition by Henry Warren.
 fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Integer) {
 	// Normalise.
-	let s = Integer::from( rhs.leading_zeros());
-	let mut ln = lhs.shl_borrow( &s).content;
-	let rn = rhs.shr_borrow( &s).content;
+	let s = rhs.leading_zeros();
+	let mut ln = lhs.shl_block_borrow( s, 0).content;
+	let rn = rhs.shl_block_borrow( s, 0).content;
 
-	let mut quot : Vec<Block> = Vec::with_capacity( ln.len());
-	quot.resize( ln.len(), 0);
+	let mut quot : Vec<Block> = vec![0; ln.len()];
 
+//	println!("s: {}", s);
+//	for i in 0..ln.len() {
+//		println!("ri: {:0b}", ln[i]);
+//	}
+//
 	let r_end : LongBlock = rn[rn.len() - 1] as LongBlock;
 	let r_end2 : LongBlock = rn[rn.len() - 2] as LongBlock;
-	for j in (0..ln.len() - rn.len() + 1).rev() {
+	let bm1 : LongBlock = Block::max_value() as LongBlock;
+	for j in (0..ln.len() - rn.len()).rev() { // + 1 ... add 1 if shifting didn't add??
 		// Note: Check if u_j == v_end??
 
 		let lj : LongBlock = ln[j] as LongBlock;
-		let lj1 : LongBlock = ln[j-1] as LongBlock;
-		let lj2 : LongBlock = ln[j-2] as LongBlock;
+		let lj1 : LongBlock = if j <= 0 {0} else {ln[j-1] as LongBlock};
+		let lj2 : LongBlock = if j <= 1 {0} else {ln[j-2] as LongBlock};
 		let mut qhat : LongBlock = (mul_b( lj) + lj1) / r_end;
+		if qhat > bm1 {
+			qhat = bm1;
+		}
+
 		while r_end2 * qhat > mul_b(mul_b( lj) + lj1 - qhat * r_end) + lj2 {
 			qhat = qhat - 1;
 		}
+
+		println!("{}: {}:", j, qhat);
 
 		let mut k : SignedLongBlock = 0;
 		let mask = Block::max_value() as LongBlock;
@@ -91,8 +103,6 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 			let t : SignedLongBlock = (ln[i+j] as SignedLongBlock) - k - ((p & mask) as SignedLongBlock);
 			ln[i+j] = t as Block;
 			k = ((p >> (BLOCK_SIZE as LongBlock)) as SignedLongBlock) - (t >> (BLOCK_SIZE as SignedLongBlock));
-
-			panic!("TODO");
 		}
 
 		let t : SignedLongBlock = (ln[rn.len()+j] as SignedLongBlock) - k;
@@ -112,10 +122,10 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 	}
 
 	let q = pos_integer( quot);
-	let r = pos_integer( rn);
+	let r = pos_integer( ln);
 
 	// TODO: mut shiftr XXX
-	let r = r.shr_borrow( &s);
+	let r = r.shr_block_borrow( s, 0);
 
 	(q, r)
 }
@@ -126,7 +136,7 @@ fn mul_b( x : LongBlock) -> LongBlock {
 }
 
 // Divide and mod an unsigned integer when the divisor is one block.
-// From: Hacker's Delight, Second Edition by Henry Warren
+// From: Hacker's Delight, Second Edition by Henry Warren.
 fn div_mod_u_n_1( u : &Vec<Block>, v : Block) -> ( Integer, Integer) {
 	let v = v as LongBlock;
 	let mut q = Vec::with_capacity( u.len());
@@ -142,7 +152,7 @@ fn div_mod_u_n_1( u : &Vec<Block>, v : Block) -> ( Integer, Integer) {
 	}
 
 	// Convert k to vector.
-	let mut k = vec![dbl_to_bl(k)];
+	let mut k = vec!(dbl_to_bl(k));
 
 	// Reverse vector.
 	q.reverse();

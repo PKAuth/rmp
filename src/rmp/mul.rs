@@ -53,8 +53,9 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
 fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	// Init result with 0s.
-	let mut res : Vec<Block> = Vec::with_capacity( lhs.size() + rhs.size() + 1);
-	res.resize( lhs.size() + rhs.size() + 1, 0);
+	// let mut res : Vec<Block> = Vec::with_capacity( lhs.size() + rhs.size() + 1);
+	// res.resize( lhs.size() + rhs.size() + 1, 0);
+	let mut res : Vec<Block> = vec![0; lhs.size() + rhs.size() + 1];
 
 	for i in 0..lhs.size() {
 		let li : LongBlock = lhs.content[i] as LongBlock;
