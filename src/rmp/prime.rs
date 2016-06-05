@@ -6,7 +6,7 @@ use std::ops::{Sub, Add};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
-use super::{Integer, Block, BLOCK_SIZE};
+use super::{Integer, Block, BLOCK_SIZE, SignedBlock};
 use super::internal::{get_bit, get_bits};
 
 impl Integer {
@@ -84,7 +84,7 @@ impl Integer {
 
 		// Note: Could compact this as we're not using the even ones, but that'd require an extra division by 2.
 		let i0 = Integer::from( 0);
-		let mut g = vec![ i0; k];
+		let mut g = vec![ i0; 1 << k]; 
 
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
@@ -96,19 +96,19 @@ impl Integer {
 		let mut a = Integer::from( 1);
 
 		// Iterate over bits of e.
-		let mut i = BLOCK_SIZE - e.leading_zeros() - 1; // 0 <= i <= 31
+		let mut i : SignedBlock = (BLOCK_SIZE - e.leading_zeros() - 1) as SignedBlock; // 0 <= i <= 31
 		for b in (0..e.size()).rev() {
 			while i >= 0 {
-				let e_i = get_bit( e.content[b], i);
+				let e_i = get_bit( e.content[b], i as Block);
 
 				if e_i == 0 {
 					a = a.exp_pow2_mod( 1, &base);
 					i = i - 1;
 				}
 				else if e_i == 1 {
-					let (str, len) = longest_bitstring( &e.content, b, i, k as Block);
+					let (str, len) = longest_bitstring( &e.content, b, i as Block, k as Block);
 					a = a.exp_pow2_mod( len, &base).mult_mod( &g[str], &base);
-					i = i - len;
+					i = i - (len as SignedBlock);
 				}
 				else {
 					panic!("sliding_exp_mod: bit is not 0 or 1.")
@@ -116,7 +116,7 @@ impl Integer {
 			}
 
 			// Reset i for next block.
-			i = i + BLOCK_SIZE;
+			i = i + (BLOCK_SIZE as SignedBlock);
 		}
 		
 		a

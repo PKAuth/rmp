@@ -35,6 +35,7 @@ pub struct Integer {
 }
 
 pub type Block = u32; // Block
+pub type SignedBlock = i32; // Signed Block - Loses 1 bit of precision
 pub type LongBlock = u64; // Long Block
 pub type SignedLongBlock = i64; // Signed Long Block - Loses 1 bit of precision.
 const BLOCK_SIZE : Block = 32;

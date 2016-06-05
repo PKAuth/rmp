@@ -47,8 +47,7 @@ impl Integer {
 fn div_mod_positives( u : &Integer, v : &Integer) -> ( Integer, Integer) {
 	// Check if u is shorter than v.
 	if u.size() < v.size() {
-		// return (Integer::From(0), u.content)
-		panic!("TODO")
+		return (Integer::from(0), u.clone())
 	}
 
 	// Check for Nx1.

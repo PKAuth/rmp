@@ -203,6 +203,8 @@ mod tests {
 		let (q, r) = i79228162495817593524129366015.div_mod( &i18446744069414584320);
 		assert!( q == im.clone() + i1.clone());
 		assert!( r == im);
+
+		panic!("TODO: Test add back XXX");
 	}
 
 	#[test]
