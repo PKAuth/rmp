@@ -20,15 +20,19 @@ impl Integer {
 		}
 
 		let i2 = Integer::from( 2);
-		while !p.is_probably_prime_r( rng) {
+		let mut c = 0;
+		while !p.is_probably_prime( rng) && c < 100000 {
+			println!("Testing: {}", p);
 			p.add_mut( &i2);
+			c += 1;
 		}
+		panic!("false");
 
 		p
 	}
 
 	/// Determine whether the integer is probably prime. 
-	pub fn is_probably_prime_r(&self, rng : &mut OsRng) -> bool {
+	pub fn is_probably_prime(&self, rng : &mut OsRng) -> bool {
 		// Note: Check for negatives and evens; less than 4?
 
 		// Check if integer is multiple of the earliest primes.

@@ -8,6 +8,8 @@ pub mod rmp;
 #[cfg(test)]
 mod tests {
 	extern crate rand;
+
+	use std::str::FromStr;
 	
 	use rmp::Integer;
 	use self::rand::OsRng;
@@ -210,6 +212,10 @@ mod tests {
 	#[test]
 	fn prime() {
 		let mut r = OsRng::new().unwrap();
+
+		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+		println!("{}", i12620138152996470709);
+		assert!( i12620138152996470709.is_probably_prime( &mut r));
 		
 		println!("{}", Integer::generate_prime(2, &mut r));
 

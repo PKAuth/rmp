@@ -88,7 +88,7 @@ pub fn get_bit( x : Block, i : Block) -> Block {
 // Get n bits of x, starting at i (towards the lsb). 0 is lsb.
 #[inline(always)]
 pub fn get_bits( x : Block, i : Block, n : Block) -> Block {
-	(x >> (i - n + 1)) & ((1 << n) - 1)
+	(x >> (i + 1 - n)) & ((1 << n) - 1)
 }
 
 // Coerce to a Block. Panics if out of range.
