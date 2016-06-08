@@ -63,6 +63,8 @@ fn div_mod_positives( u : &Integer, v : &Integer) -> ( Integer, Integer) {
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm D.
 // Referenced: Hacker's Delight, Second Edition by Henry Warren.
 fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Integer) {
+	// println!("{}/{}", lhs, rhs);
+
 	// Normalise.
 	let s = rhs.leading_zeros();
 	let mut ln = lhs.shl_block_borrow( s, 0).content;
@@ -101,6 +103,7 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 		}
 
 		let t : SignedLongBlock = (ln[n+j] as SignedLongBlock) - k;
+		// println!("{} - {} = {}", ln[n + j], k, t);
 		ln[n+j] = t as Block;
 
 		quot[j] = qhat as Block; // TODO: this is probably wrong??
@@ -108,11 +111,12 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 			quot[j] = quot[j] - 1;
 			let mut k : LongBlock = 0;
 			for i in 0..n {
-				let t : LongBlock = (ln[i + j] as LongBlock) + (rn[i] as LongBlock) + k;
-				ln[i + j] = t as Block;
-				k = t >> (BLOCK_SIZE as LongBlock);
+				let s : LongBlock = (ln[i + j] as LongBlock) + (rn[i] as LongBlock) + k;
+				ln[i + j] = s as Block;
+				k = s >> (BLOCK_SIZE as LongBlock);
 			}
-			ln[n + j] = ln[n + j] + (k as Block);
+			// println!("{:0b} += {}", ln[n + j], k);
+			ln[n + j] = (t + (k as SignedLongBlock)) as Block;
 		}
 	}
 

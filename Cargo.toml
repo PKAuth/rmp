@@ -5,3 +5,4 @@ authors = ["James Parker <dev@jamesparker.me>"]
 
 [dependencies]
 rand = "*"
+

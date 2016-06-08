@@ -206,7 +206,20 @@ mod tests {
 		assert!( q == im.clone() + i1.clone());
 		assert!( r == im);
 
-		panic!("TODO: Test add back XXX");
+		let i9223231299366420480 = Integer::from_str("9223231299366420480").unwrap();
+		let i140737488355329 = Integer::from_str("140737488355329").unwrap();
+
+		let i65534 = Integer::from_str("65534").unwrap();
+		let i140737488289794 = Integer::from_str("140737488289794").unwrap();
+
+		assert!( i9223231299366420480.div_mod( &i140737488355329) == (i65534, i140737488289794));
+
+		let t = Integer::from_str( "37755296672150276119904024272893412830191382436986206695533510300981264900").unwrap();
+		let b = Integer::from_str( "9524048358032163729718187613397213873").unwrap();
+		let q = Integer::from_str( "3964206737811145041420635799606649236").unwrap();
+		let r = Integer::from_str( "9524048358032163729718187613397213872").unwrap();
+
+		assert!( t.div_mod( &b) == ( q, r));
 	}
 
 	#[test]
@@ -233,8 +246,28 @@ mod tests {
 		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
 		assert!( i12620138152996470709.is_probably_prime( &mut r));
 		
-		// println!("{}", Integer::generate_prime(2, &mut r));
+		// println!("{}", Integer::generate_prime(4, &mut r));
+
+		// println!("{}", Integer::generate_prime( 64, &mut r));
 
 		// assert!(false);
 	}
+
+	// extern crate criterion;
+	// use criterion::{Bencher, Criterion};
+	// #[bench]
+	// fn prime_bench() {
+	// 	fn routine(b: &mut Bencher) {
+  //   	// Setup (construct data, allocate memory, etc)
+	// 		let mut r = OsRng::new().unwrap();
+	// 		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+
+  //   	b.iter(|| {
+  //   	    i12620138152996470709.is_probably_prime( &mut r)
+  //   	})
+
+  //   	// Teardown (free resources)
+	// 	}
+	// 	Criterion::default().bench("routine", routine)
+	// }
 }

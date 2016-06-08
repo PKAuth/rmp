@@ -21,12 +21,11 @@ impl Integer {
 
 		let i2 = Integer::from( 2);
 		let mut c = 0;
-		while !p.is_probably_prime( rng) && c < 100000 {
-			println!("Testing: {}", p);
+		while !p.is_probably_prime( rng) { // && c < 100000 
+			// println!("Testing: {}", p);
 			p.add_mut( &i2);
 			c += 1;
 		}
-		panic!("false");
 
 		p
 	}
@@ -42,7 +41,7 @@ impl Integer {
 
 		// Fermat primality test.
 		if !self.fermat_primality_test( 64, rng) {
-			println!("Failed");
+			// println!("Failed");
 			return false
 		}
 
@@ -170,7 +169,7 @@ impl Integer {
 		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
 		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
-			println!("Failed with: {}, {}", a, a.exp_mod( &self.sub_borrow( &i1), self));
+			// println!("Failed with: {}, {}", a, a.exp_mod( &self.sub_borrow( &i1), self));
 			false
 		}
 		else {
