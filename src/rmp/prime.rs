@@ -41,12 +41,13 @@ impl Integer {
 		}
 
 		// Fermat primality test.
-		if !self.fermat_primality_test_r( 64, rng) {
+		if !self.fermat_primality_test( 64, rng) {
+			println!("Failed");
 			return false
 		}
 
 		// Miller Rabin primality test.
-		self.miller_rabin_primality_test_r( 32, rng)
+		self.miller_rabin_primality_test( 32, rng)
 	}
 
 	/// Perform (self ^ power mod base).
@@ -60,7 +61,7 @@ impl Integer {
 	// Algorithm 14.85 from Handbook of Applied Cryptography.
 	// k should be > 2, < BLOCK_SIZE
 	fn sliding_exp_mod( &self, e : &Integer, base : &Integer, k : usize) -> Integer {
-		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( usize, Block) {
+		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( Block, usize) {
 			let mut c = min( i + 1, k);
 
 			// Get c bits from e[b].
@@ -83,7 +84,17 @@ impl Integer {
 				c = c - 1;
 			}
 
-			(c as usize, str)
+			(c, str as usize)
+		}
+
+		// Note: Probably can improve this.
+		// a ^ (2 ^ e) mod base
+		fn exp_2_exp_mod( a : &Integer, e : Block, base : &Integer) -> Integer {
+			let mut res = a.clone();
+			for i in 0..e {
+				res = res.mult_mod( &res, &base);
+			}
+			res
 		}
 
 		// Note: Could compact this as we're not using the even ones, but that'd require an extra division by 2.
@@ -92,7 +103,7 @@ impl Integer {
 
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
-		g[2] = self.exp_pow2_mod( 1, &base);
+		g[2] = self.mult_mod( &g[1], &base);
 		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
 			g[2*i + 1] = g[2*i - 1].mult_mod( &g[2], &base);
 		}
@@ -104,14 +115,19 @@ impl Integer {
 		for b in (0..e.size()).rev() {
 			while i >= 0 {
 				let e_i = get_bit( e.content[b], i as Block);
+				// println!("{}th bit: {}", i, e_i);
 
 				if e_i == 0 {
-					a = a.exp_pow2_mod( 1, &base);
+					a = a.mult_mod( &a, &base); // Note: Square this eventually.
 					i = i - 1;
 				}
 				else if e_i == 1 {
-					let (str, len) = longest_bitstring( &e.content, b, i as Block, k as Block);
-					a = a.exp_pow2_mod( len, &base).mult_mod( &g[str], &base);
+					let (len, str) = longest_bitstring( &e.content, b, i as Block, k as Block);
+					// println!("{:0b}", e.content[b]);
+					// println!("longest bs ({}): {}", len, str);
+					a = exp_2_exp_mod( &a, len, &base).mult_mod( &g[str], &base);
+					// println!("g[{}]: {}", str, g[str]);
+					// println!("a: {}", a);
 					i = i - (len as SignedBlock);
 				}
 				else {
@@ -135,13 +151,13 @@ impl Integer {
 
 	/// Compute self * rhs mod base.
 	pub fn mult_mod( &self, rhs : &Integer, base : &Integer) -> Integer {
-		// Note: Are there faster techniques? 
+		// Note: Use Montgomery reduction for mult, Barret reduction for mod?
 		let r = self.modulus( base) * rhs.modulus( base);
 		r.modulus( base)
 	}
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
-	fn fermat_primality_test_r( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn fermat_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
 		if k <= 0 {
 			return true
 		}
@@ -154,15 +170,16 @@ impl Integer {
 		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
 		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
+			println!("Failed with: {}, {}", a, a.exp_mod( &self.sub_borrow( &i1), self));
 			false
 		}
 		else {
-			self.fermat_primality_test_r( k - 1, rng)
+			self.fermat_primality_test( k - 1, rng)
 		}
 	}
 
 	// Input must be greater than 3.
-	fn miller_rabin_primality_test_r( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn miller_rabin_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
 		// Check if even.
 		if self.is_even() {
 			return false

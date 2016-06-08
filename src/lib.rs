@@ -210,15 +210,31 @@ mod tests {
 	}
 
 	#[test]
+	fn exp_mod() {
+		let i3 = Integer::from( 3);
+		let i2 = Integer::from( 2);
+		let i9 = Integer::from( 9);
+		let i10 = Integer::from( 10);
+
+		assert!( i9 == i3.exp_mod( &i2, &i10));
+
+		let i1 = Integer::from( 1);
+		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+		let i1947183550686142566 = Integer::from_str("1947183550686142566").unwrap();
+		// println!( "res: {}", i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
+
+		assert!( i1 == i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
+	}
+
+	#[test]
 	fn prime() {
 		let mut r = OsRng::new().unwrap();
 
 		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
-		println!("{}", i12620138152996470709);
 		assert!( i12620138152996470709.is_probably_prime( &mut r));
 		
-		println!("{}", Integer::generate_prime(2, &mut r));
+		// println!("{}", Integer::generate_prime(2, &mut r));
 
-		assert!(false);
+		// assert!(false);
 	}
 }
