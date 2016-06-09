@@ -162,96 +162,117 @@ mod tests {
 
 	#[test]
 	fn div_alg_d() {
-		let i0 = Integer::from( 0);
-		let i1 = Integer::from( 1);
-		let i2 = Integer::from( 2);
-		let im = Integer::from( u32::max_value());
-		let i32 = Integer::from( 32);
-		let i11 = (i1.clone() << i32.clone()) + i1.clone();
-		let imm = (im.clone() << i32.clone()) + im.clone();
-		let immm = (imm.clone() << i32.clone()) + im.clone();
-		let immmm = (immm.clone() << i32.clone()) + im.clone();
+		// let i0 = Integer::from( 0);
+		// let i1 = Integer::from( 1);
+		// let i2 = Integer::from( 2);
+		// let im = Integer::from( u32::max_value());
+		// let i32 = Integer::from( 32);
+		// let i11 = (i1.clone() << i32.clone()) + i1.clone();
+		// let imm = (im.clone() << i32.clone()) + im.clone();
+		// let immm = (imm.clone() << i32.clone()) + im.clone();
+		// let immmm = (immm.clone() << i32.clone()) + im.clone();
 
-		let i3 = Integer::from( 3);
-		let i18446744069414584320 = im.clone() << i32.clone();
-		let i79228162495817593524129366015 = ((im.clone() << i32.clone()) << i32.clone()) + im.clone();
+		// let i3 = Integer::from( 3);
+		// let i18446744069414584320 = im.clone() << i32.clone();
+		// let i79228162495817593524129366015 = ((im.clone() << i32.clone()) << i32.clone()) + im.clone();
 
-		// test div_mod_u_n_1
-		let (q, r) = immm.div_mod( &i1);
-		assert!( q == immm);
-		assert!( r == i0);
+		// // test div_mod_u_n_1
+		// let (q, r) = immm.div_mod( &i1);
+		// assert!( q == immm);
+		// assert!( r == i0);
 
-		let (q, r) = imm.div_mod( &i11);
+		// let (q, r) = imm.div_mod( &i11);
+		// // // println!( "q:{}", q);
+		// // // println!( "r:{}", r);
+		// assert!( q == im);
+		// assert!( r == i0);
+
+		// let (q, r) = immm.div_mod( &i11);
 		// // println!( "q:{}", q);
 		// // println!( "r:{}", r);
-		assert!( q == im);
-		assert!( r == i0);
+		// assert!( q == i18446744069414584320); // 18446744069414584320
+		// assert!( r == im); // 4294967295
 
-		let (q, r) = immm.div_mod( &i11);
-		// println!( "q:{}", q);
-		// println!( "r:{}", r);
-		assert!( q == i18446744069414584320); // 18446744069414584320
-		assert!( r == im); // 4294967295
+		// // println!("{}/{}", immmm, i11);
 
-		// println!("{}/{}", immmm, i11);
+		// let (q, r) = immmm.div_mod( &i11);
+		// // println!( "q:{}", q);
+		// // println!( "r:{}", r);
+		// // println!( "i:{}", i79228162495817593524129366015);
+		// assert!( q == i79228162495817593524129366015); // 79228162495817593524129366015
+		// assert!( r == i0); // 0
 
-		let (q, r) = immmm.div_mod( &i11);
-		// println!( "q:{}", q);
-		// println!( "r:{}", r);
-		// println!( "i:{}", i79228162495817593524129366015);
-		assert!( q == i79228162495817593524129366015); // 79228162495817593524129366015
-		assert!( r == i0); // 0
+		// let (q, r) = i79228162495817593524129366015.div_mod( &i18446744069414584320);
+		// assert!( q == im.clone() + i1.clone());
+		// assert!( r == im);
 
-		let (q, r) = i79228162495817593524129366015.div_mod( &i18446744069414584320);
-		assert!( q == im.clone() + i1.clone());
-		assert!( r == im);
+		// let i9223231299366420480 = Integer::from_str("9223231299366420480").unwrap();
+		// let i140737488355329 = Integer::from_str("140737488355329").unwrap();
 
-		let i9223231299366420480 = Integer::from_str("9223231299366420480").unwrap();
-		let i140737488355329 = Integer::from_str("140737488355329").unwrap();
+		// let i65534 = Integer::from_str("65534").unwrap();
+		// let i140737488289794 = Integer::from_str("140737488289794").unwrap();
 
-		let i65534 = Integer::from_str("65534").unwrap();
-		let i140737488289794 = Integer::from_str("140737488289794").unwrap();
+		// assert!( i9223231299366420480.div_mod( &i140737488355329) == (i65534, i140737488289794));
 
-		assert!( i9223231299366420480.div_mod( &i140737488355329) == (i65534, i140737488289794));
+		// let t = Integer::from_str( "37755296672150276119904024272893412830191382436986206695533510300981264900").unwrap();
+		// let b = Integer::from_str( "9524048358032163729718187613397213873").unwrap();
+		// let q = Integer::from_str( "3964206737811145041420635799606649236").unwrap();
+		// let r = Integer::from_str( "9524048358032163729718187613397213872").unwrap();
 
-		let t = Integer::from_str( "37755296672150276119904024272893412830191382436986206695533510300981264900").unwrap();
-		let b = Integer::from_str( "9524048358032163729718187613397213873").unwrap();
-		let q = Integer::from_str( "3964206737811145041420635799606649236").unwrap();
-		let r = Integer::from_str( "9524048358032163729718187613397213872").unwrap();
+		// assert!( t.div_mod( &b) == ( q, r));
 
-		assert!( t.div_mod( &b) == ( q, r));
+		let n = Integer::from_str("27651709839375565209125650188875420306105501298794198504577623286716045783225").unwrap();
+		let d = Integer::from_str("308902425432351122477400238366534792609").unwrap();
+		let q = Integer::from_str("89516001050083118238499019832146173792").unwrap();
+		let r = Integer::from_str("35790995422436827861984988492454679897").unwrap();
+		// let ( aq, ar) = n.div_mod( &d);
+		// println!("{}/{} = ({},{})", n, d, aq, ar);
+		assert!( n.div_mod( &d) == ( q, r));
 	}
 
-	#[test]
-	fn exp_mod() {
-		let i3 = Integer::from( 3);
-		let i2 = Integer::from( 2);
-		let i9 = Integer::from( 9);
-		let i10 = Integer::from( 10);
+	// #[test]
+	// fn exp_mod() {
+	// 	// let i3 = Integer::from( 3);
+	// 	// let i2 = Integer::from( 2);
+	// 	// let i9 = Integer::from( 9);
+	// 	// let i10 = Integer::from( 10);
 
-		assert!( i9 == i3.exp_mod( &i2, &i10));
+	// 	// assert!( i9 == i3.exp_mod( &i2, &i10));
 
-		let i1 = Integer::from( 1);
-		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
-		let i1947183550686142566 = Integer::from_str("1947183550686142566").unwrap();
-		// println!( "res: {}", i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
+	// 	let i1 = Integer::from( 1);
+	// 	// let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+	// 	// let i1947183550686142566 = Integer::from_str("1947183550686142566").unwrap();
+	// 	// // println!( "res: {}", i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
 
-		assert!( i1 == i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
-	}
+	// 	// assert!( i1 == i1947183550686142566.exp_mod( &i12620138152996470709.sub_borrow( &i1), &i12620138152996470709));
 
-	#[test]
-	fn prime() {
-		let mut r = OsRng::new().unwrap();
+	// 	let i308902425432351122477400238366534792609 = Integer::from_str("308902425432351122477400238366534792609").unwrap();
+	// 	let i308548023917423949115556599091438751199 = Integer::from_str("308548023917423949115556599091438751199").unwrap();
 
-		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
-		assert!( i12620138152996470709.is_probably_prime( &mut r));
-		
-		// println!("{}", Integer::generate_prime(4, &mut r));
+	// 	assert!( i1 == i308548023917423949115556599091438751199.exp_mod( &i308902425432351122477400238366534792609.sub_borrow( &i1), &i308902425432351122477400238366534792609));
+	// }
 
-		// println!("{}", Integer::generate_prime( 64, &mut r));
+	// #[test]
+	// fn prime() {
+	// 	let mut r = OsRng::new().unwrap();
 
-		// assert!(false);
-	}
+	// 	let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+	// 	assert!( i12620138152996470709.is_probably_prime( &mut r));
+
+	// 	let i244917586431534476306755499156239542077 = Integer::from_str("244917586431534476306755499156239542077").unwrap();
+	// 	assert!( !i244917586431534476306755499156239542077.is_probably_prime( &mut r));
+
+	// 	let i308902425432351122477400238366534792609 = Integer::from_str("308902425432351122477400238366534792609").unwrap();
+	// 	assert!( i308902425432351122477400238366534792609.is_probably_prime( &mut r));
+	// 	
+	// 	// let i128263571026758587339481122278816336209 = Integer::from_str("128263571026758587339481122278816336209").unwrap();
+	// 	
+	// 	// println!("{}", Integer::generate_prime(4, &mut r));
+
+	// 	// println!("{}", Integer::generate_prime( 64, &mut r));
+
+	// 	assert!(false);
+	// }
 
 	// extern crate criterion;
 	// use criterion::{Bencher, Criterion};
