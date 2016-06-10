@@ -63,7 +63,7 @@ fn div_mod_positives( u : &Integer, v : &Integer) -> ( Integer, Integer) {
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm D.
 // Referenced: Hacker's Delight, Second Edition by Henry Warren.
 fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Integer) {
-	println!("{}/{}", lhs, rhs);
+	// println!("{}/{}", lhs, rhs);
 
 	// Normalise.
 	let s = rhs.leading_zeros();
@@ -85,19 +85,19 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 		let lj1 : LongBlock = ln[n+j-1] as LongBlock;
 		let lj2 : LongBlock = ln[n+j-2] as LongBlock;
 		let mut qhat : LongBlock = (mul_b( lj) + lj1) / r_end;
-		println!("{}/{}", mul_b( lj) + lj1, r_end);
-		println!("qhat': {}", qhat);
+		// println!("{}/{}", mul_b( lj) + lj1, r_end);
+		// println!("qhat': {}", qhat);
 		if qhat > bm1 {
 			qhat = bm1;
 		}
 
-		println!( "{}, {}, {}, {}, {}", r_end2, r_end, lj, lj1, lj2);
+		// println!( "{}, {}, {}, {}, {}", r_end2, r_end, lj, lj1, lj2);
 		while r_end2 * qhat > mul_b(mul_b( lj) + lj1 - qhat * r_end) + lj2 {
-			if (mul_b( lj) + lj1 - qhat * r_end > bm1) {
-				println!( "ljlj1: {}", mul_b( lj) + lj1);
-				println!( "qr: {} * {} = {}", qhat, r_end, qhat * r_end);
-				println!("bad: {}", mul_b( lj) + lj1 - qhat * r_end);
-			}
+			// if (mul_b( lj) + lj1 - qhat * r_end > bm1) {
+			// 	println!( "ljlj1: {}", mul_b( lj) + lj1);
+			// 	println!( "qr: {} * {} = {}", qhat, r_end, qhat * r_end);
+			// 	println!("bad: {}", mul_b( lj) + lj1 - qhat * r_end);
+			// }
 
 			qhat = qhat - 1;
 
@@ -106,7 +106,7 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 				break;
 			}
 		}
-		println!("qhat: {}", qhat);
+		// println!("qhat: {}", qhat);
 
 		let mut k : SignedLongBlock = 0;
 		let mask = Block::max_value() as LongBlock;
@@ -118,7 +118,7 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 		}
 
 		let t : SignedLongBlock = (ln[n+j] as SignedLongBlock) - k;
-		println!("{} - {} = {}", ln[n + j], k, t);
+		// println!("{} - {} = {}", ln[n + j], k, t);
 		ln[n+j] = t as Block;
 
 		quot[j] = qhat as Block; // TODO: this is probably wrong??

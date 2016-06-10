@@ -22,7 +22,7 @@ impl Integer {
 		let i2 = Integer::from( 2);
 		let mut c = 0;
 		while !p.is_probably_prime( rng) { // && c < 100 { // 
-			println!("Testing: {}", p);
+			// println!("Testing: {}", p);
 			p.add_mut( &i2);
 			c += 1;
 		}
@@ -41,7 +41,7 @@ impl Integer {
 
 		// Fermat primality test.
 		if !self.fermat_primality_test( 64, rng) {
-			println!("Failed");
+			// println!("Failed");
 			return false
 		}
 
@@ -103,25 +103,22 @@ impl Integer {
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
 		g[2] = self.mult_mod( &g[1], &base);
-			println!("g[1] = {}", g[1]);
-			println!("g[2] = {}", g[2]);
 		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
 			g[2*i + 1] = g[2*i - 1].mult_mod( &g[2], &base);
-			println!("g[{}] = {}", 2*i + 1, g[2*i + 1]);
 		}
 
 		let mut a = Integer::from( 1);
 
-		println!("self: {}", self);
-		println!("e: {}", e);
+		// println!("self: {}", self);
+		// println!("e: {}", e);
 
 		// Iterate over bits of e.
 		let mut i : SignedBlock = (BLOCK_SIZE - e.leading_zeros() - 1) as SignedBlock; // 0 <= i <= 31
 		for b in (0..e.size()).rev() {
 			while i >= 0 {
 				let e_i = get_bit( e.content[b], i as Block);
-				println!("{:0b}", e.content[b]);
-				println!("{}th bit: {}", i, e_i);
+				// println!("{:0b}", e.content[b]);
+				// println!("{}th bit: {}", i, e_i);
 
 				if e_i == 0 {
 					a = a.mult_mod( &a, &base); // Note: Square this eventually.
@@ -129,10 +126,10 @@ impl Integer {
 				}
 				else if e_i == 1 {
 					let (len, str) = longest_bitstring( &e.content, b, i as Block, k as Block);
-					println!("longest bs ({}): {}", len, str);
+					// println!("longest bs ({}): {}", len, str);
 					a = exp_2_exp_mod( &a, len, &base).mult_mod( &g[str], &base);
-					println!("g[{}]: {}", str, g[str]);
-					println!("a: {}", a);
+					// println!("g[{}]: {}", str, g[str]);
+					// println!("a: {}", a);
 					i = i - (len as SignedBlock);
 				}
 				else {
@@ -175,7 +172,7 @@ impl Integer {
 		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
 		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
-			println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
+			// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
 			false
 		}
 		else {
