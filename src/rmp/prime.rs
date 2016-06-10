@@ -20,11 +20,11 @@ impl Integer {
 		}
 
 		let i2 = Integer::from( 2);
-		let mut c = 0;
+		// let mut c = 0;
 		while !p.is_probably_prime( rng) { // && c < 100 { // 
 			// println!("Testing: {}", p);
 			p.add_mut( &i2);
-			c += 1;
+			// c += 1;
 		}
 
 		p
