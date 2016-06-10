@@ -91,8 +91,20 @@ fn div_mod_base_case_positives( lhs : &Integer, rhs : &Integer) -> (Integer, Int
 			qhat = bm1;
 		}
 
+		println!( "{}, {}, {}, {}, {}", r_end2, r_end, lj, lj1, lj2);
 		while r_end2 * qhat > mul_b(mul_b( lj) + lj1 - qhat * r_end) + lj2 {
+			if (mul_b( lj) + lj1 - qhat * r_end > bm1) {
+				println!( "ljlj1: {}", mul_b( lj) + lj1);
+				println!( "qr: {} * {} = {}", qhat, r_end, qhat * r_end);
+				println!("bad: {}", mul_b( lj) + lj1 - qhat * r_end);
+			}
+
 			qhat = qhat - 1;
+
+			// Check if it's going to overflow (implies the while condition will fail). 
+			if mul_b( lj) + lj1 - qhat * r_end > bm1 {
+				break;
+			}
 		}
 		println!("qhat: {}", qhat);
 
