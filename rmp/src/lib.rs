@@ -1,4 +1,5 @@
 // #![feature(const_fn)]
+#![feature(test)]
 
 // Modules.
 pub mod rmp;
@@ -252,6 +253,7 @@ mod tests {
 		assert!( i1 == i308548023917423949115556599091438751199.exp_mod( &i308902425432351122477400238366534792609.sub_borrow( &i1), &i308902425432351122477400238366534792609));
 	}
 
+
 	#[test]
 	fn prime() {
 		let mut r = OsRng::new().unwrap();
@@ -276,20 +278,26 @@ mod tests {
 	}
 
 	// extern crate criterion;
-	// use criterion::{Bencher, Criterion};
-	// #[bench]
+	// use self::criterion::*;
+	// #[test]
 	// fn prime_bench() {
-	// 	fn routine(b: &mut Bencher) {
-  //   	// Setup (construct data, allocate memory, etc)
-	// 		let mut r = OsRng::new().unwrap();
-	// 		let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
+		extern crate test;
+		use self::test::Bencher;
+		#[bench]
+		fn routine(b: &mut Bencher) {
+    	// Setup (construct data, allocate memory, etc)
+			let mut r = OsRng::new().unwrap();
+			let i12620138152996470709 = Integer::from_str("12620138152996470709").unwrap();
 
-  //   	b.iter(|| {
-  //   	    i12620138152996470709.is_probably_prime( &mut r)
-  //   	})
+    	b.iter(|| {
+    	    i12620138152996470709.is_probably_prime( &mut r)
+    	})
 
-  //   	// Teardown (free resources)
-	// 	}
-	// 	Criterion::default().bench("routine", routine)
+    	// Teardown (free resources)
+		}
+	// 	let mut c = Criterion::default();
+	// 	c.bench_function("routine", routine);
+	// 
+	// 	assert!(false);
 	// }
 }

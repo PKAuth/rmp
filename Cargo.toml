@@ -1,8 +1,0 @@
-[package]
-name = "rmp"
-version = "0.1.0"
-authors = ["James Parker <dev@jamesparker.me>"]
-
-[dependencies]
-rand = "*"
-
