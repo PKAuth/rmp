@@ -11,6 +11,14 @@ impl Integer {
 		multiply( self, rhs)
 	}
 
+	/// Compute self * rhs mod base.
+	// Note: Not safe against side channels. 
+	pub fn mul_mod( &self, rhs : &Integer, base : &Integer) -> Integer {
+		// Note: Use Montgomery reduction for mult, Barret reduction for mod?
+		let r = self.modulus( base) * rhs.modulus( base);
+		r.modulus( base)
+	}
+
 	// Note: Don't think a mutable version is worth it since we can't really do it in place without an allocation. 
 	// pub fn mul_mut( &mut self, rhs : &Integer) {
 	// 	// TODO: various algorithms dependent on the size of inputs. XXX

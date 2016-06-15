@@ -91,7 +91,7 @@ impl Integer {
 		fn exp_2_exp_mod( a : &Integer, e : Block, base : &Integer) -> Integer {
 			let mut res = a.clone();
 			for i in 0..e {
-				res = res.mult_mod( &res, &base);
+				res = res.mul_mod( &res, &base);
 			}
 			res
 		}
@@ -102,9 +102,9 @@ impl Integer {
 
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
-		g[2] = self.mult_mod( &g[1], &base);
+		g[2] = self.mul_mod( &g[1], &base);
 		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
-			g[2*i + 1] = g[2*i - 1].mult_mod( &g[2], &base);
+			g[2*i + 1] = g[2*i - 1].mul_mod( &g[2], &base);
 		}
 
 		let mut a = Integer::from( 1);
@@ -121,13 +121,13 @@ impl Integer {
 				// println!("{}th bit: {}", i, e_i);
 
 				if e_i == 0 {
-					a = a.mult_mod( &a, &base); // Note: Square this eventually.
+					a = a.mul_mod( &a, &base); // Note: Square this eventually.
 					i = i - 1;
 				}
 				else if e_i == 1 {
 					let (len, str) = longest_bitstring( &e.content, b, i as Block, k as Block);
 					// println!("longest bs ({}): {}", len, str);
-					a = exp_2_exp_mod( &a, len, &base).mult_mod( &g[str], &base);
+					a = exp_2_exp_mod( &a, len, &base).mul_mod( &g[str], &base);
 					// println!("g[{}]: {}", str, g[str]);
 					// println!("a: {}", a);
 					i = i - (len as SignedBlock);
@@ -149,13 +149,6 @@ impl Integer {
 		// Note: Can this be improved??
 		let x : Integer = self.shl_borrow( &Integer::from( k));
 		x.modulus( base)
-	}
-
-	/// Compute self * rhs mod base.
-	pub fn mult_mod( &self, rhs : &Integer, base : &Integer) -> Integer {
-		// Note: Use Montgomery reduction for mult, Barret reduction for mod?
-		let r = self.modulus( base) * rhs.modulus( base);
-		r.modulus( base)
 	}
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
@@ -209,7 +202,8 @@ impl Integer {
 			// Repeat r - 1 times.
 			let mut j = i1.clone();
 			while j < r {
-				x = x.mul_borrow( &x).modulus( self); // TODO: use sqr_mut XXX
+				// x = x.mul_borrow( &x).modulus( self); // TODO: use sqr_mut XXX
+				x = x.mul_mod( &x, self); // TODO: use sqr_mut XXX
 				if x == i1 {
 					return false
 				}
@@ -225,8 +219,84 @@ impl Integer {
 
 		return true
 	}
-}
 
+
+	fn multiplicative_inverse( &self, m : Integer) -> Option<Integer> {
+		// extended_gcd( m, self)
+		panic!("TODO");
+	}
+
+	/// Computes a, b, gcd(x, y) in a*x + b*y = gcd( x, y).
+	// Algorithm 14.61 from Handbook of Applied Cryptography.
+	pub fn extended_gcd( x : &Integer, y : &Integer) -> (Integer, Integer, Integer) {
+		// Divide x and y by 2 while either are even.
+		let endC = min( x.trailing_zeros(), y.trailing_zeros());
+		let i0 : Integer = Integer::from( 0);
+		let i1 : Integer = Integer::from( 1);
+		// let g = i1.shl_borrow( &endC);
+		let x = x.shr_borrow( &endC); // Note: use shr_block_borrow??
+		let y = y.shr_borrow( &endC);
+	
+		let mut u = x.clone();
+		let mut v = y.clone();
+	
+		let mut a = i1.clone();
+		let mut b = i0.clone();
+		let mut c = i0.clone();
+		let mut d = i1.clone();
+	
+		while true {
+			// Note: count training bits instead? Could save some allocations. 
+			while u.is_even() {
+				u = u.shr_block_borrow( 1, 0);
+	
+				if a.is_odd() || b.is_odd() {
+					a.add_mut( &y);
+					b.sub_mut( &x);
+				}
+	
+				a = a.shr_block_borrow( 1, 0); // Note: Make these mutable.
+				b = b.shr_block_borrow( 1, 0);
+			}
+	
+			while v.is_even() {
+				v = v.shr_block_borrow( 1, 0);
+	
+				if c.is_odd() || d.is_odd() {
+					c.add_mut( &y);
+					d.add_mut( &x);
+				}
+	
+			 	c = c.shr_block_borrow( 1, 0);
+			 	d = d.shr_block_borrow( 1, 0);
+			}
+	
+			if u >= v {
+				u.sub_mut( &v);
+				a.sub_mut( &c);
+				b.sub_mut( &d);
+			}
+			else {
+				v.sub_mut( &u);
+				c.sub_mut( &a);
+				d.sub_mut( &b);
+			}
+	
+			if u.is_zero() {
+				break;
+			}
+		}
+	
+		let gcd = v.shl_borrow( &endC);
+		( a, b, gcd)
+	}
+// This errata might apply: 
+// Page 610, Note 14.64: When Algorithm 14.61 terminates, it may not be the case that |D| < m, so it is not guaranteed that z lies in the interval [0,m-1]. The following changes guarantee that z lies in [0,m-1].
+// (1) At the end of the first line of step 6 of Algorithm 14.61, add "If B>0 then A <-- A+y and B <-- B-x.
+// (2) At the end of the second line of step 6 of Algorithm 14.61, add " If D>0 then C <-- C+y and D <-- D-x.
+// (3) When Algorithm 14.61 terminates, set z=D+m if D<0, and z=D otherwise.
+
+}
 
 // From: https://primes.utm.edu/lists/small/1000.txt
 // TODO: Can this be improved? Make a [Integer] instead? XXX

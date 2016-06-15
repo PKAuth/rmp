@@ -275,6 +275,20 @@ mod tests {
 		// assert!(false);
 	}
 
+	#[test]
+	fn extended_gcd() {
+		let i693 = Integer::from(693);
+		let i609 = Integer::from(609);
+		let i21 = Integer::from( 21);
+		let i206 = Integer::from( 206);
+		let n181 = Integer::from( -181);
+		let (a, b, g) = Integer::extended_gcd( &i693, &i609);
+		println!("{} {} {}", a, b, g);
+		assert!( g == i21);
+		assert!( b == i206);
+		assert!( a == n181);
+	}
+
 	// extern crate criterion;
 	// use criterion::{Bencher, Criterion};
 	// #[bench]
