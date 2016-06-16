@@ -13,6 +13,7 @@ impl Integer {
 			panic!( "shl: rhs is negative")
 		}
 
+		// TODO: Don't use div_mod for this. XXX
 		let ( emptyBlockCI, shiftCI) = rhs.div_mod( &Integer::from( BLOCK_SIZE));
 		let shiftC = to_block( &shiftCI);
 		let emptyBlockC = to_usize( &emptyBlockCI);
@@ -26,6 +27,7 @@ impl Integer {
 			panic!( "shr: rhs is negative")
 		}
 
+		// TODO: Don't use div_mod for this. XXX
 		let ( skipCI, shiftCI) = rhs.div_mod( &Integer::from( BLOCK_SIZE));
 		let shiftC = to_block( &shiftCI);
 		let skipC = to_usize( &skipCI);

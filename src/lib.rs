@@ -283,10 +283,12 @@ mod tests {
 		let i206 = Integer::from( 206);
 		let n181 = Integer::from( -181);
 		let (a, b, g) = Integer::extended_gcd( &i693, &i609);
-		println!("{} {} {}", a, b, g);
+		// println!("{} {} {}", a, b, g);
 		assert!( g == i21);
 		assert!( b == i206);
 		assert!( a == n181);
+
+		panic!("TODO: test that results are always less than inputs (errata)");
 	}
 
 	// extern crate criterion;

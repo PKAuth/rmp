@@ -244,6 +244,8 @@ impl Integer {
 		let mut b = i0.clone();
 		let mut c = i0.clone();
 		let mut d = i1.clone();
+
+		// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
 	
 		while true {
 			// Note: count training bits instead? Could save some allocations. 
@@ -257,6 +259,7 @@ impl Integer {
 	
 				a = a.shr_block_borrow( 1, 0); // Note: Make these mutable.
 				b = b.shr_block_borrow( 1, 0);
+				// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
 			}
 	
 			while v.is_even() {
@@ -264,11 +267,12 @@ impl Integer {
 	
 				if c.is_odd() || d.is_odd() {
 					c.add_mut( &y);
-					d.add_mut( &x);
+					d.sub_mut( &x);
 				}
 	
 			 	c = c.shr_block_borrow( 1, 0);
 			 	d = d.shr_block_borrow( 1, 0);
+				// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
 			}
 	
 			if u >= v {
@@ -282,13 +286,14 @@ impl Integer {
 				d.sub_mut( &b);
 			}
 	
+			// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
 			if u.is_zero() {
 				break;
 			}
 		}
 	
 		let gcd = v.shl_borrow( &endC);
-		( a, b, gcd)
+		( c, d, gcd)
 	}
 // This errata might apply: 
 // Page 610, Note 14.64: When Algorithm 14.61 terminates, it may not be the case that |D| < m, so it is not guaranteed that z lies in the interval [0,m-1]. The following changes guarantee that z lies in [0,m-1].
