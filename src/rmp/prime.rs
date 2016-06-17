@@ -221,7 +221,7 @@ impl Integer {
 	}
 
 
-	// Compute the multiplicative inverser of self modulus m.
+	// Compute the multiplicative inverse of self modulus m.
 	pub fn multiplicative_inverse( &self, m : &Integer) -> Option<Integer> {
 		let (_, mut b, gcd) = Integer::extended_gcd( m, self);
 

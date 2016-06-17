@@ -1,6 +1,6 @@
 use std::ops::{Shl};
 
-use super::{Integer, Block, LongBlock, BLOCK_SIZE};
+use super::{Integer, Block, LongBlock, BLOCK_SIZE, LG_BLOCK_SIZE};
 use super::internal::{pos_integer, to_block, to_usize};
 // use rmp::shift::internal;
 
@@ -13,11 +13,7 @@ impl Integer {
 			panic!( "shl: rhs is negative")
 		}
 
-		// TODO: Don't use div_mod for this. XXX
-		let ( emptyBlockCI, shiftCI) = rhs.div_mod( &Integer::from( BLOCK_SIZE));
-		let shiftC = to_block( &shiftCI);
-		let emptyBlockC = to_usize( &emptyBlockCI);
-
+		let ( emptyBlockC, shiftC) = div_mod_block_size( &rhs);
 		self.shl_block_borrow( shiftC, emptyBlockC)
 	}
 
@@ -27,11 +23,7 @@ impl Integer {
 			panic!( "shr: rhs is negative")
 		}
 
-		// TODO: Don't use div_mod for this. XXX
-		let ( skipCI, shiftCI) = rhs.div_mod( &Integer::from( BLOCK_SIZE));
-		let shiftC = to_block( &shiftCI);
-		let skipC = to_usize( &skipCI);
-
+		let ( skipC, shiftC) = div_mod_block_size( &rhs);
 		self.shr_block_borrow( shiftC, skipC)
 	}
 }
@@ -45,4 +37,17 @@ impl Shl<Integer> for Integer {
 	}
 }
 
+// Helper function.
+// Assumes input is positive.
+fn div_mod_block_size( x : &Integer) -> ( usize, Block) {
+	if x.is_zero() {
+		return ( 0, 0)
+	}
+
+	let mask = BLOCK_SIZE - 1;
+	let rem = x.content[0] & mask;
+	let div = to_usize( &x.shr_block_borrow( LG_BLOCK_SIZE, 0));
+
+	(div, rem)
+}
 

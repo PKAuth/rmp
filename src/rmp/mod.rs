@@ -39,6 +39,7 @@ pub type SignedBlock = i32; // Signed Block - Loses 1 bit of precision
 pub type LongBlock = u64; // Long Block
 pub type SignedLongBlock = i64; // Signed Long Block - Loses 1 bit of precision.
 const BLOCK_SIZE : Block = 32;
+const LG_BLOCK_SIZE : Block = 5; // log2( BLOCK_SIZE)
 
 // Some basic Integer functions.
 impl Integer {

@@ -127,9 +127,11 @@ mod tests {
 		let i2 = Integer::from( 2);
 		let i3 = Integer::from( 3);
 		let i1 = Integer::from( 1);
+		let i0 = Integer::from( 0);
 		// println!("{}", i2.shr_borrow( &i1));
 		assert!( i2.shr_borrow( &i1) == i1);
 		assert!( i6.shr_borrow( &i1) == i3);
+		assert!( i6.shr_borrow( &i0) == i6);
 	}
 
 	#[test]
@@ -138,9 +140,11 @@ mod tests {
 		let i2 = Integer::from( 2);
 		let i3 = Integer::from( 3);
 		let i1 = Integer::from( 1);
+		let i0 = Integer::from( 0);
 
 		assert!( i1.shl_borrow( &i1) == i2);
 		assert!( i3.shl_borrow( &i1) == i6);
+		assert!( i6.shl_borrow( &i0) == i6);
 	}
 
 	#[test]
