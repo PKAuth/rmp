@@ -285,10 +285,17 @@ mod tests {
 		let (a, b, g) = Integer::extended_gcd( &i693, &i609);
 		// println!("{} {} {}", a, b, g);
 		assert!( g == i21);
-		assert!( b == i206);
-		assert!( a == n181);
+		assert!( a * i693 + b * i609 == g);
+	}
 
-		panic!("TODO: test that results are always less than inputs (errata)");
+	#[test]
+	fn multiplicative_inverse() {
+		let i383 = Integer::from(383);
+		let i271 = Integer::from(271);
+		let i106 = Integer::from(106);
+
+		let res = i271.multiplicative_inverse( &i383);
+		assert!( res == Some( i106));
 	}
 
 	// extern crate criterion;

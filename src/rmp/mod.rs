@@ -49,6 +49,10 @@ impl Integer {
 		self.size() == 0
 	}
 
+	pub fn is_one( &self) -> bool {
+		self.size() == 1 && self.positive && self.content[0] == 1
+	}
+
 	/// Determine if the integer is even.
 	#[inline(always)]
 	pub fn is_even(&self) -> bool {

@@ -221,9 +221,21 @@ impl Integer {
 	}
 
 
-	fn multiplicative_inverse( &self, m : Integer) -> Option<Integer> {
-		// extended_gcd( m, self)
-		panic!("TODO");
+	// Compute the multiplicative inverser of self modulus m.
+	pub fn multiplicative_inverse( &self, m : &Integer) -> Option<Integer> {
+		let (_, mut b, gcd) = Integer::extended_gcd( m, self);
+
+		// If gcd is not one, self does not have a multiplicative inverse mod m.
+		if !gcd.is_one() {
+			return None
+		}
+
+		// If b is negative, make it mod m.
+		if b.is_negative() {
+			b.add_mut( m);
+		}
+		
+		Some( b)
 	}
 
 	/// Computes a, b, gcd(x, y) in a*x + b*y = gcd( x, y).
@@ -279,11 +291,21 @@ impl Integer {
 				u.sub_mut( &v);
 				a.sub_mut( &c);
 				b.sub_mut( &d);
+
+				if b > i0 {
+					a.add_mut( &y);
+					b.sub_mut( &x);
+				}
 			}
 			else {
 				v.sub_mut( &u);
 				c.sub_mut( &a);
 				d.sub_mut( &b);
+
+				if d > i0 {
+					c.add_mut( &y);
+					d.sub_mut( &x);
+				}
 			}
 	
 			// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
@@ -295,11 +317,13 @@ impl Integer {
 		let gcd = v.shl_borrow( &endC);
 		( c, d, gcd)
 	}
-// This errata might apply: 
+// From errata:
 // Page 610, Note 14.64: When Algorithm 14.61 terminates, it may not be the case that |D| < m, so it is not guaranteed that z lies in the interval [0,m-1]. The following changes guarantee that z lies in [0,m-1].
 // (1) At the end of the first line of step 6 of Algorithm 14.61, add "If B>0 then A <-- A+y and B <-- B-x.
 // (2) At the end of the second line of step 6 of Algorithm 14.61, add " If D>0 then C <-- C+y and D <-- D-x.
 // (3) When Algorithm 14.61 terminates, set z=D+m if D<0, and z=D otherwise.
+
+// Note: We probably don't need to compute a and c.
 
 }
 
