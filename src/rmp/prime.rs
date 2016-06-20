@@ -225,6 +225,7 @@ impl Integer {
 		let block_size = Integer::from(BLOCK_SIZE);
 		let b = Integer::from(1).shl_borrow( &block_size);
 		if let Some( mp) = m.multiplicative_inverse( &b).map(|x| {x.neg() + b}) {
+			let mp0 = get_zero( &mp, 0);
 			let f = Box::new( move |x : Integer, y : Integer| {
 				let mut a = Integer::from( 0);
 				let y0 = get_zero( &y, 0);
@@ -233,7 +234,7 @@ impl Integer {
 				for i in 0..n {
 					let a0 = get_zero( &a, 0);
 					let xi = get_zero( &x, i);
-					let u : Block = a0.overflowing_add( xi.overflowing_mul( y0).0).0; // Can use overflowing ops since everything is mod b anyways.
+					let u : Block = a0.overflowing_add( xi.overflowing_mul( y0).0).0.overflowing_mul( mp0).0; // Can use overflowing ops since everything is mod b anyways.
 					let xi_y = Integer::from( xi).mul_borrow( &y);
 					a.add_mut( &xi_y);
 					let u_m = Integer::from( u).mul_borrow( &m);
