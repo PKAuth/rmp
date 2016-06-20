@@ -129,3 +129,11 @@ pub fn to_usize( x : &Integer) -> usize {
 		r
 	}
 }
+
+// Return the ith block if it exists. Otherwise, return 0.
+pub fn get_zero( x : &Integer, i : usize) -> Block {
+	match x.content.get( i) {
+		None => 0,
+		Some( xi) => *xi,
+	}
+}

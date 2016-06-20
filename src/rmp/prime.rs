@@ -2,12 +2,12 @@ extern crate rand;
 
 use std::cmp::{min};
 use std::iter::Iterator;
-use std::ops::{Sub, Add};
+use std::ops::{Sub, Add, Shl, Neg};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
 use super::{Integer, Block, BLOCK_SIZE, SignedBlock};
-use super::internal::{get_bit, get_bits};
+use super::internal::{get_bit, get_bits, get_zero};
 
 impl Integer {
 	/// Generate a prime number of size BLOCK_SIZE * b;
@@ -220,6 +220,44 @@ impl Integer {
 		return true
 	}
 
+	// Returns r, r, r^-1 and a function that computes x*y*r^-1 mod m using montgomery reduction.
+	fn montgomery_multiplication( m : Integer) -> Option<Box<Fn(Integer, Integer) -> Integer>> {
+		let block_size = Integer::from(BLOCK_SIZE);
+		let b = Integer::from(1).shl_borrow( &block_size);
+		if let Some( mp) = m.multiplicative_inverse( &b).map(|x| {x.neg() + b}) {
+			let f = Box::new( move |x : Integer, y : Integer| {
+				let mut a = Integer::from( 0);
+				let y0 = get_zero( &y, 0);
+				let n = m.size();
+
+				for i in 0..n {
+					let a0 = get_zero( &a, 0);
+					let xi = get_zero( &x, i);
+					let u : Block = a0.overflowing_add( xi.overflowing_mul( y0).0).0; // Can use overflowing ops since everything is mod b anyways.
+					let xi_y = Integer::from( xi).mul_borrow( &y);
+					a.add_mut( &xi_y);
+					let u_m = Integer::from( u).mul_borrow( &m);
+					a.add_mut( &u_m);
+					
+					// TODO: use a mutable shift. XXX
+					let a = a.shr_borrow( &block_size);
+				}
+
+				if a >= m {
+					a.sub_borrow( &m)
+				}
+				else {
+					a
+				}
+			});
+
+			Some( f)
+		}
+		else {
+			None
+		}
+	}
+
 
 	// Compute the multiplicative inverse of self modulus m.
 	pub fn multiplicative_inverse( &self, m : &Integer) -> Option<Integer> {
@@ -326,6 +364,23 @@ impl Integer {
 // Note: We probably don't need to compute a and c.
 
 }
+
+
+// fn applyn(n: int) -> fn@(fn@(i: int)) {
+//     return |f| {
+//         let mut i = 0;
+//         while i < n {
+//           f(i);
+//           i += 1;
+//         }
+//     };
+// }
+// 
+// fn main() {
+//     let apply10 = applyn(10);
+//     apply10(|i| { io::println(i.to_str()); });
+// }
+
 
 // From: https://primes.utm.edu/lists/small/1000.txt
 // TODO: Can this be improved? Make a [Integer] instead? XXX
