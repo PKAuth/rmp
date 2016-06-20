@@ -1,4 +1,4 @@
-use std::ops::{Sub, Neg};
+use std::ops::{Sub};
 
 use super::Integer;
 

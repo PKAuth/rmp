@@ -168,7 +168,7 @@ mod tests {
 	fn div_alg_d() {
 		let i0 = Integer::from( 0);
 		let i1 = Integer::from( 1);
-		let i2 = Integer::from( 2);
+		// let i2 = Integer::from( 2);
 		let im = Integer::from( u32::max_value());
 		let i32 = Integer::from( 32);
 		let i11 = (i1.clone() << i32.clone()) + i1.clone();
@@ -176,7 +176,7 @@ mod tests {
 		let immm = (imm.clone() << i32.clone()) + im.clone();
 		let immmm = (immm.clone() << i32.clone()) + im.clone();
 
-		let i3 = Integer::from( 3);
+		// let i3 = Integer::from( 3);
 		let i18446744069414584320 = im.clone() << i32.clone();
 		let i79228162495817593524129366015 = ((im.clone() << i32.clone()) << i32.clone()) + im.clone();
 
@@ -284,8 +284,8 @@ mod tests {
 		let i693 = Integer::from(693);
 		let i609 = Integer::from(609);
 		let i21 = Integer::from( 21);
-		let i206 = Integer::from( 206);
-		let n181 = Integer::from( -181);
+		// let i206 = Integer::from( 206);
+		// let n181 = Integer::from( -181);
 		let (a, b, g) = Integer::extended_gcd( &i693, &i609);
 		// println!("{} {} {}", a, b, g);
 		assert!( g == i21);
@@ -300,6 +300,27 @@ mod tests {
 
 		let res = i271.multiplicative_inverse( &i383);
 		assert!( res == Some( i106));
+
+		let i72639 = Integer::from(72639);
+		let i4294967296 = Integer::from_str("4294967296").unwrap();
+		let i457233471 = Integer::from(457233471);
+
+		let res = i72639.multiplicative_inverse( &i4294967296);
+		assert!( res == Some(i457233471));
+	}
+
+	#[test]
+	fn montgomery_multiplication() {
+		let m = Integer::from(72639);
+		let x = Integer::from(5792);
+		let y = Integer::from(1229);
+		let exp = Integer::from(72385);
+		let i1 = Integer::from(1);
+
+		let (mul_r, mul) = Integer::montgomery_multiplication( m.clone()).unwrap();
+		let res = mul( &mul( &mul_r(&x), &mul_r(&y)), &i1);
+		// println!("{} = {} * {} mod {}", res, x, y, m);
+		assert!( res == exp);
 	}
 
 	// extern crate criterion;

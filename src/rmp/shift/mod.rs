@@ -1,7 +1,7 @@
 use std::ops::{Shl};
 
-use super::{Integer, Block, LongBlock, BLOCK_SIZE, LG_BLOCK_SIZE};
-use super::internal::{pos_integer, to_block, to_usize};
+use super::{Integer, Block, BLOCK_SIZE, LG_BLOCK_SIZE};
+use super::internal::{to_usize};
 // use rmp::shift::internal;
 
 mod internal;
@@ -13,8 +13,8 @@ impl Integer {
 			panic!( "shl: rhs is negative")
 		}
 
-		let ( emptyBlockC, shiftC) = div_mod_block_size( &rhs);
-		self.shl_block_borrow( shiftC, emptyBlockC)
+		let ( empty_block_c, shift_c) = div_mod_block_size( &rhs);
+		self.shl_block_borrow( shift_c, empty_block_c)
 	}
 
 	// Shift right while borrowing.
@@ -23,8 +23,8 @@ impl Integer {
 			panic!( "shr: rhs is negative")
 		}
 
-		let ( skipC, shiftC) = div_mod_block_size( &rhs);
-		self.shr_block_borrow( shiftC, skipC)
+		let ( skip_c, shift_c) = div_mod_block_size( &rhs);
+		self.shr_block_borrow( shift_c, skip_c)
 	}
 }
 

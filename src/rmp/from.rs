@@ -1,7 +1,27 @@
 use std::convert::From;
 use std::str::FromStr;
 
-use super::{Integer, Block};
+use super::{Integer, Block, LongBlock, BLOCK_SIZE};
+
+impl From<usize> for Integer {
+	fn from( x : usize) -> Integer {
+		Integer::from( x as LongBlock)
+	}
+}
+
+impl From<LongBlock> for Integer {
+	fn from( x : LongBlock) -> Integer {
+		let lower = x as Block; // Masks
+		let mut res = Integer::from( lower);
+
+		let upper = (x >> BLOCK_SIZE) as Block;
+		if upper != 0 {
+			res.content.push( upper);
+		}
+
+		res
+	}
+}
 
 impl From<Block> for Integer {
 	fn from(x : Block) -> Integer {
@@ -39,7 +59,7 @@ impl FromStr for Integer {
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
 		fn to_block( c : char) -> Option<Block> {
 			if let Some( x) = c.to_digit( 10) {
-				if x < 0 || x > 9 {
+				if x > 9 { // Implicit: x < 0 || 
 					None
 				}
 				else {

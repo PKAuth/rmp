@@ -42,7 +42,7 @@ impl Integer {
 fn random_vec_blocks( n : usize, rng : &mut OsRng) -> Vec<Block> {
 	let mut r = Vec::with_capacity( n);
 
-	for i in 0..n {
+	for _ in 0..n {
 		r.push( rng.gen());
 	}
 

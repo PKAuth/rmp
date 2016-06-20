@@ -1,7 +1,7 @@
 // Internal module for division.
 
 use super::{Integer, Block, LongBlock, BLOCK_SIZE, SignedLongBlock};
-use super::internal::{remove_leading_zeroes, dbl_to_bl, div_by_zero, pos_integer};
+use super::internal::{dbl_to_bl, div_by_zero, pos_integer};
 
 impl Integer {
 	/// Checks whether the integer is a multiple of the argument.
@@ -23,7 +23,7 @@ impl Integer {
 
 		// TODO: check other base conditions here... XXX
 
-		let (mut q, mut r) = div_mod_positives( &self, &rhs);
+		let (q, mut r) = div_mod_positives( &self, &rhs);
 		match ( self.is_positive(), rhs.is_positive()) {
 			(true, true) => {
 				(q, r)
@@ -166,7 +166,7 @@ fn div_mod_u_n_1( u : &Vec<Block>, v : Block) -> ( Integer, Integer) {
 	}
 
 	// Convert k to vector.
-	let mut k = vec!(dbl_to_bl(k));
+	let k = vec!(dbl_to_bl(k));
 
 	// Reverse vector.
 	q.reverse();

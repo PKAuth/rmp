@@ -91,6 +91,7 @@ pub fn get_bits( x : Block, i : Block, n : Block) -> Block {
 	(x >> (i + 1 - n)) & ((1 << n) - 1)
 }
 
+/*
 // Coerce to a Block. Panics if out of range.
 pub fn to_block( x : &Integer) -> Block {
 	if x < &Integer::from( 0) || x > &Integer::from( Block::max_value()) {
@@ -103,6 +104,7 @@ pub fn to_block( x : &Integer) -> Block {
 		x.content[0]
 	}
 }
+*/
 
 // Coerce to a usize. Panics if out of range.
 pub fn to_usize( x : &Integer) -> usize {
@@ -118,11 +120,17 @@ pub fn to_usize( x : &Integer) -> usize {
 
 		for i in 0..x.size() {
 			let b = x.content[i] as usize;
-			match r.checked_add( b) {
-				Some( next) => 
-					r = next,
-				Nothing =>
-					break,
+			match r.checked_shl( BLOCK_SIZE) {
+				None =>
+					panic!("to_usize: overflow"),
+				Some( s) => {
+					match s.checked_add( b) {
+						Some( next) => 
+							r = next,
+						None =>
+							break,
+					}
+				},
 			}
 		}
 

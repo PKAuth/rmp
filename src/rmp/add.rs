@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
-use std::ops::{Add, Neg};
+use std::ops::{Add};
 
-use super::internal::{pos_integer, neg_integer, normalize_leading_zeroes};
+use super::internal::{normalize_leading_zeroes};
 use super::{Integer, Block};
 // use super::sign;
 
@@ -57,7 +57,7 @@ fn sub_positives_mut( lhs : &mut Integer, rhs : &Integer, swap : bool) {
 	fn get( x : &Integer, i : usize) -> Block {
 		match x.content.get(i) {
 			Some( b) => *b,
-			Nothing => 0,
+			None => 0,
 		}
 	}
 

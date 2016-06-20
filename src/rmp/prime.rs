@@ -2,7 +2,7 @@ extern crate rand;
 
 use std::cmp::{min};
 use std::iter::Iterator;
-use std::ops::{Sub, Add, Shl, Neg};
+use std::ops::{Neg};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
@@ -68,8 +68,8 @@ impl Integer {
 
 			// Check if we need next block.
 			if b != 0 && k != c {
-				let secondC = k - c;
-				str = str << secondC | get_bits( e[b-1], 31, secondC);
+				let second_c = k - c;
+				str = str << second_c | get_bits( e[b-1], 31, second_c);
 
 				c = k;
 			}
@@ -90,7 +90,7 @@ impl Integer {
 		// a ^ (2 ^ e) mod base
 		fn exp_2_exp_mod( a : &Integer, e : Block, base : &Integer) -> Integer {
 			let mut res = a.clone();
-			for i in 0..e {
+			for _ in 0..e {
 				res = res.mul_mod( &res, &base);
 			}
 			res
@@ -144,12 +144,14 @@ impl Integer {
 		a
 	}
 
+	/*
 	// Compute self * 2^k mod base
 	fn exp_pow2_mod( &self, k : Block, base : &Integer) -> Integer {
 		// Note: Can this be improved??
 		let x : Integer = self.shl_borrow( &Integer::from( k));
 		x.modulus( base)
 	}
+	*/
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
 	fn fermat_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
@@ -190,7 +192,7 @@ impl Integer {
 		let d = nm1.shr_borrow( &r);
 
 		// Repeat k times.
-		'outer: for i in 0..k {
+		'outer: for _ in 0..k {
 			// Generate a in [2,p-2]
 			let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
@@ -220,28 +222,39 @@ impl Integer {
 		return true
 	}
 
-	// Returns r, r, r^-1 and a function that computes x*y*r^-1 mod m using montgomery reduction.
-	fn montgomery_multiplication( m : Integer) -> Option<Box<Fn(Integer, Integer) -> Integer>> {
+	// Returns a function that computes x*r mod m, and a function that computes x*y*r^-1 mod m using montgomery reduction.
+	pub fn montgomery_multiplication( m : Integer) -> Option<(Box<Fn(&Integer) -> Integer>, Box<Fn(&Integer, &Integer) -> Integer>)> {
 		let block_size = Integer::from(BLOCK_SIZE);
 		let b = Integer::from(1).shl_borrow( &block_size);
+		let n = m.size();
 		if let Some( mp) = m.multiplicative_inverse( &b).map(|x| {x.neg() + b}) {
+			let shift_c = Integer::from( n).mul_borrow( &block_size);
+			let mc = m.clone();
+			let mul_f = Box::new(move |x : &Integer| {
+				x.shl_borrow( &shift_c).modulus( &mc)
+				// TODO: use barret reduction?? XXX
+			});
+
 			let mp0 = get_zero( &mp, 0);
-			let f = Box::new( move |x : Integer, y : Integer| {
+			println!("mp: {}", mp);
+			let f = Box::new( move |x : &Integer, y : &Integer| {
 				let mut a = Integer::from( 0);
 				let y0 = get_zero( &y, 0);
-				let n = m.size();
 
 				for i in 0..n {
 					let a0 = get_zero( &a, 0);
 					let xi = get_zero( &x, i);
-					let u : Block = a0.overflowing_add( xi.overflowing_mul( y0).0).0.overflowing_mul( mp0).0; // Can use overflowing ops since everything is mod b anyways.
+					let xi_y0 : Block = xi.overflowing_mul( y0).0;
+					let u : Block = a0.overflowing_add( xi_y0).0.overflowing_mul( mp0).0; // Can use overflowing ops since everything is mod b anyways.
 					let xi_y = Integer::from( xi).mul_borrow( &y);
 					a.add_mut( &xi_y);
 					let u_m = Integer::from( u).mul_borrow( &m);
 					a.add_mut( &u_m);
 					
 					// TODO: use a mutable shift. XXX
-					let a = a.shr_borrow( &block_size);
+					a = a.shr_borrow( &block_size);
+
+					// println!("{} {} {} {} {} {} {}", i, xi, xi_y0, u, xi_y, u_m, a)
 				}
 
 				if a >= m {
@@ -252,7 +265,7 @@ impl Integer {
 				}
 			});
 
-			Some( f)
+			Some(( mul_f, f))
 		}
 		else {
 			None
@@ -262,6 +275,8 @@ impl Integer {
 
 	// Compute the multiplicative inverse of self modulus m.
 	pub fn multiplicative_inverse( &self, m : &Integer) -> Option<Integer> {
+		// TODO: What if self >= m? Panic? XXX
+
 		let (_, mut b, gcd) = Integer::extended_gcd( m, self);
 
 		// If gcd is not one, self does not have a multiplicative inverse mod m.
@@ -281,12 +296,12 @@ impl Integer {
 	// Algorithm 14.61 from Handbook of Applied Cryptography.
 	pub fn extended_gcd( x : &Integer, y : &Integer) -> (Integer, Integer, Integer) {
 		// Divide x and y by 2 while either are even.
-		let endC = min( x.trailing_zeros(), y.trailing_zeros());
+		let end_c = min( x.trailing_zeros(), y.trailing_zeros());
 		let i0 : Integer = Integer::from( 0);
 		let i1 : Integer = Integer::from( 1);
-		// let g = i1.shl_borrow( &endC);
-		let x = x.shr_borrow( &endC); // Note: use shr_block_borrow??
-		let y = y.shr_borrow( &endC);
+		// let g = i1.shl_borrow( &end_c);
+		let x = x.shr_borrow( &end_c); // Note: use shr_block_borrow??
+		let y = y.shr_borrow( &end_c);
 	
 		let mut u = x.clone();
 		let mut v = y.clone();
@@ -298,7 +313,7 @@ impl Integer {
 
 		// println!("{} {} {} {} {} {}", u, v, a, b, c, d);
 	
-		while true {
+		loop {
 			// Note: count training bits instead? Could save some allocations. 
 			while u.is_even() {
 				u = u.shr_block_borrow( 1, 0);
@@ -353,7 +368,7 @@ impl Integer {
 			}
 		}
 	
-		let gcd = v.shl_borrow( &endC);
+		let gcd = v.shl_borrow( &end_c);
 		( c, d, gcd)
 	}
 // From errata:
