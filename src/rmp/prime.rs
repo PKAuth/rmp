@@ -6,6 +6,8 @@ use std::ops::{Neg};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
+pub type MulMod = Box<Fn(&Integer, &Integer) -> Integer>;
+
 use super::{Integer, Block, BLOCK_SIZE, SignedBlock};
 use super::internal::{get_bit, get_bits, get_zero};
 
@@ -22,7 +24,7 @@ impl Integer {
 		let i2 = Integer::from( 2);
 		// let mut c = 0;
 		while !p.is_probably_prime( rng) { // && c < 100 { // 
-			// println!("Testing: {}", p);
+			println!("Testing: {}", p);
 			p.add_mut( &i2);
 			// c += 1;
 		}
@@ -45,22 +47,27 @@ impl Integer {
 			return false
 		}
 
-		// Miller Rabin primality test.
-		// According to Table 4.4 of Handbook of Applied Cryptography, we only need to do 2 rounds.
-		self.miller_rabin_primality_test( 4, rng)
+		if let Some(muls) = Integer::montgomery_multiplication( self.clone()) {
+			// Miller Rabin primality test.
+			// According to Table 4.4 of Handbook of Applied Cryptography, we only need to do 2 rounds.
+			self.miller_rabin_primality_test( 4, muls, rng)
+		}
+		else {
+			false
+		}
 	}
 
 	/// Perform (self ^ power mod base).
-	pub fn exp_mod( &self, power : &Integer, base : &Integer) -> Integer {
+	pub fn exp_mod( &self, power : &Integer, f : &MulMod) -> Integer {
 		// TODO: Choose some k based on the power! XXX
 		let k = 4;
 
-		self.sliding_exp_mod( power, base, k)
+		self.sliding_exp_mod( power, k, f)
 	}
 
 	// Algorithm 14.85 from Handbook of Applied Cryptography.
 	// k should be > 2, < BLOCK_SIZE
-	fn sliding_exp_mod( &self, e : &Integer, base : &Integer, k : usize) -> Integer {
+	fn sliding_exp_mod( &self, e : &Integer, k : usize, mul_mod : &MulMod) -> Integer {
 		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( Block, usize) {
 			let mut c = min( i + 1, k);
 
@@ -89,10 +96,10 @@ impl Integer {
 
 		// Note: Probably can improve this.
 		// a ^ (2 ^ e) mod base
-		fn exp_2_exp_mod( a : &Integer, e : Block, base : &Integer) -> Integer {
+		fn exp_2_exp_mod( a : &Integer, e : Block, mul_mod : &MulMod) -> Integer {
 			let mut res = a.clone();
 			for _ in 0..e {
-				res = res.mul_mod( &res, &base);
+				res = mul_mod( &res, &res);
 			}
 			res
 		}
@@ -103,9 +110,9 @@ impl Integer {
 
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
-		g[2] = self.mul_mod( &g[1], &base);
+		g[2] = mul_mod( &self, &g[1]);
 		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
-			g[2*i + 1] = g[2*i - 1].mul_mod( &g[2], &base);
+			g[2*i + 1] = mul_mod( &g[2*i - 1], &g[2]);
 		}
 
 		let mut a = Integer::from( 1);
@@ -122,13 +129,13 @@ impl Integer {
 				// println!("{}th bit: {}", i, e_i);
 
 				if e_i == 0 {
-					a = a.mul_mod( &a, &base); // Note: Square this eventually.
+					a = mul_mod( &a, &a); // Note: Square this eventually.
 					i = i - 1;
 				}
 				else if e_i == 1 {
 					let (len, str) = longest_bitstring( &e.content, b, i as Block, k as Block);
 					// println!("longest bs ({}): {}", len, str);
-					a = exp_2_exp_mod( &a, len, &base).mul_mod( &g[str], &base);
+					a = mul_mod( &exp_2_exp_mod( &a, len, &mul_mod), &g[str]);
 					// println!("g[{}]: {}", str, g[str]);
 					// println!("a: {}", a);
 					i = i - (len as SignedBlock);
@@ -165,19 +172,20 @@ impl Integer {
 		let i3 : Integer = Integer::from( 3);
 
 		// Generate a in [2,p-2]
-		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
+		// let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
-		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
-			// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
-			false
-		}
-		else {
-			self.fermat_primality_test( k - 1, rng)
-		}
+		// if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
+		// 	// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
+		// 	false
+		// }
+		// else {
+		// 	self.fermat_primality_test( k - 1, rng)
+		// }
+		true // TODO: undo this XXX
 	}
 
 	// Input must be greater than 3.
-	fn miller_rabin_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn miller_rabin_primality_test( &self, k : usize, (mul_r, mul_mod) : (Box<Fn(&Integer) -> Integer>, MulMod), rng : &mut OsRng) -> bool {
 		// Check if even.
 		if self.is_even() {
 			return false
@@ -195,10 +203,11 @@ impl Integer {
 		// Repeat k times.
 		'outer: for _ in 0..k {
 			// Generate a in [2,p-2]
-			let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
+			let a = mul_r( &Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2)); // TODO: finish mul_r
 
-			let mut x = a.exp_mod( &d, self);
-			if x == i1 || x == nm1 {
+			let mut x = a.exp_mod( &d, &mul_mod);
+			let c = mul_mod( &x, &i1);
+			if c == i1 || c == nm1 { // TODO: update these... XXX
 				continue;
 			}
 
@@ -206,11 +215,12 @@ impl Integer {
 			let mut j = i1.clone();
 			while j < r {
 				// x = x.mul_borrow( &x).modulus( self); // TODO: use sqr_mut XXX
-				x = x.mul_mod( &x, self); // TODO: use sqr_mut XXX
-				if x == i1 {
+				x = mul_mod( &x, &x); // TODO: use sqr_mut XXX
+				let c = mul_mod( &x, &i1);
+				if c == i1 { // TODO: update these... XXX
 					return false
 				}
-				else if x == nm1 {
+				else if c == nm1 { // TODO: update these... XXX
 					continue 'outer
 				}
 
