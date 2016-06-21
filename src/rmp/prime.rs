@@ -175,7 +175,7 @@ impl Integer {
 		// Generate a in [2,p-2]
 		let a = mul_r( &Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2));
 
-		if a.exp_mod( &self.sub_borrow( &i1), &mul_r, &mul_mod) != i1 {
+		if mul_mod( &a.exp_mod( &self.sub_borrow( &i1), &mul_r, &mul_mod), &i1) != i1 {
 			// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
 			false
 		}
