@@ -42,16 +42,16 @@ impl Integer {
 			return false
 		}
 
-		// Fermat primality test.
-		if !self.fermat_primality_test( 1, rng) {
-			// println!("Failed");
-			return false
-		}
+		if let Some((r, m)) = Integer::montgomery_multiplication( self.clone()) {
+			// Fermat primality test.
+			if !self.fermat_primality_test( &r, &m, 1, rng) {
+				// println!("Failed");
+				return false
+			}
 
-		if let Some(muls) = Integer::montgomery_multiplication( self.clone()) {
 			// Miller Rabin primality test.
 			// According to Table 4.4 of Handbook of Applied Cryptography, we only need to do 2 rounds.
-			self.miller_rabin_primality_test( 4, muls, rng)
+			self.miller_rabin_primality_test( 4, (r, m), rng)
 		}
 		else {
 			false
@@ -163,7 +163,7 @@ impl Integer {
 	*/
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
-	fn fermat_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn fermat_primality_test( &self, mul_r : &RMod, mul_mod : &MulMod, k : usize, rng : &mut OsRng) -> bool {
 		if k <= 0 {
 			return true
 		}
@@ -173,16 +173,15 @@ impl Integer {
 		let i3 : Integer = Integer::from( 3);
 
 		// Generate a in [2,p-2]
-		// let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
+		let a = mul_r( &Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2));
 
-		// if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
-		// 	// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
-		// 	false
-		// }
-		// else {
-		// 	self.fermat_primality_test( k - 1, rng)
-		// }
-		true // TODO: undo this XXX
+		if a.exp_mod( &self.sub_borrow( &i1), &mul_r, &mul_mod) != i1 {
+			// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
+			false
+		}
+		else {
+			self.fermat_primality_test( mul_r, mul_mod, k - 1, rng)
+		}
 	}
 
 	// Input must be greater than 3.
