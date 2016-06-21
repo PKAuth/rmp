@@ -7,6 +7,7 @@ use self::rand::OsRng;
 // use std::rand::OsRng;
 
 pub type MulMod = Box<Fn(&Integer, &Integer) -> Integer>;
+pub type RMod = Box<Fn(&Integer) -> Integer>;
 
 use super::{Integer, Block, BLOCK_SIZE, SignedBlock};
 use super::internal::{get_bit, get_bits, get_zero};
@@ -24,7 +25,7 @@ impl Integer {
 		let i2 = Integer::from( 2);
 		// let mut c = 0;
 		while !p.is_probably_prime( rng) { // && c < 100 { // 
-			println!("Testing: {}", p);
+			// println!("Testing: {}", p);
 			p.add_mut( &i2);
 			// c += 1;
 		}
@@ -58,16 +59,16 @@ impl Integer {
 	}
 
 	/// Perform (self ^ power mod base).
-	pub fn exp_mod( &self, power : &Integer, f : &MulMod) -> Integer {
+	pub fn exp_mod( &self, power : &Integer, r : &RMod, f : &MulMod) -> Integer {
 		// TODO: Choose some k based on the power! XXX
 		let k = 4;
 
-		self.sliding_exp_mod( power, k, f)
+		self.sliding_exp_mod( power, k, r, f)
 	}
 
 	// Algorithm 14.85 from Handbook of Applied Cryptography.
 	// k should be > 2, < BLOCK_SIZE
-	fn sliding_exp_mod( &self, e : &Integer, k : usize, mul_mod : &MulMod) -> Integer {
+	fn sliding_exp_mod( &self, e : &Integer, k : usize, mul_r : &RMod, mul_mod : &MulMod) -> Integer {
 		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( Block, usize) {
 			let mut c = min( i + 1, k);
 
@@ -115,7 +116,7 @@ impl Integer {
 			g[2*i + 1] = mul_mod( &g[2*i - 1], &g[2]);
 		}
 
-		let mut a = Integer::from( 1);
+		let mut a = mul_r( &Integer::from( 1));
 
 		// println!("self: {}", self);
 		// println!("e: {}", e);
@@ -205,7 +206,7 @@ impl Integer {
 			// Generate a in [2,p-2]
 			let a = mul_r( &Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2)); // TODO: finish mul_r
 
-			let mut x = a.exp_mod( &d, &mul_mod);
+			let mut x = a.exp_mod( &d, &mul_r, &mul_mod);
 			let c = mul_mod( &x, &i1);
 			if c == i1 || c == nm1 { // TODO: update these... XXX
 				continue;
