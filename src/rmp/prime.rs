@@ -21,13 +21,15 @@ impl Integer {
 
 		let i2 = Integer::from( 2);
 		// let mut c = 0;
-		while !p.is_probably_prime( rng) { // && c < 100 { // 
-			// println!("Testing: {}", p);
+		for _ in 0..100 {
+			if p.is_probably_prime( rng) {
+				return p
+			}
+
 			p.add_mut( &i2);
-			// c += 1;
 		}
 
-		p
+		Integer::generate_prime( b, rng)
 	}
 
 	/// Determine whether the integer is probably prime. 
