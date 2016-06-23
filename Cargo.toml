@@ -6,3 +6,6 @@ authors = ["James Parker <dev@jamesparker.me>"]
 [dependencies]
 rand = "*"
 
+[profile.release]
+debug=true
+

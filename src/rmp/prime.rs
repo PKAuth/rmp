@@ -41,28 +41,30 @@ impl Integer {
 			return false
 		}
 
+		let mu = Integer::barrett_reduction_mu( &self);
+
 		// Fermat primality test.
-		if !self.fermat_primality_test( 1, rng) {
+		if !self.fermat_primality_test( 1, &mu, rng) {
 			// println!("Failed");
 			return false
 		}
 
 		// Miller Rabin primality test.
 		// According to Table 4.4 of Handbook of Applied Cryptography, we only need to do 2 rounds.
-		self.miller_rabin_primality_test( 4, rng)
+		self.miller_rabin_primality_test( 4, &mu, rng)
 	}
 
 	/// Perform (self ^ power mod base).
-	pub fn exp_mod( &self, power : &Integer, base : &Integer) -> Integer {
+	pub fn exp_mod( &self, power : &Integer, mu : &Integer, base : &Integer) -> Integer {
 		// TODO: Choose some k based on the power! XXX
 		let k = 4;
 
-		self.sliding_exp_mod( power, base, k)
+		self.sliding_exp_mod( power, mu, base, k)
 	}
 
 	// Algorithm 14.85 from Handbook of Applied Cryptography.
 	// k should be > 2, < BLOCK_SIZE
-	fn sliding_exp_mod( &self, e : &Integer, base : &Integer, k : usize) -> Integer {
+	fn sliding_exp_mod( &self, e : &Integer, mu : &Integer, base : &Integer, k : usize) -> Integer {
 		fn longest_bitstring( e : &Vec<Block>, b : usize, i : Block, k : Block) -> ( Block, usize) {
 			let mut c = min( i + 1, k);
 
@@ -91,10 +93,10 @@ impl Integer {
 
 		// Note: Probably can improve this.
 		// a ^ (2 ^ e) mod base
-		fn exp_2_exp_mod( a : &Integer, e : Block, base : &Integer) -> Integer {
+		fn exp_2_exp_mod( a : &Integer, e : Block, mu : &Integer, base : &Integer) -> Integer {
 			let mut res = a.clone();
 			for _ in 0..e {
-				res = res.mul_mod( &res, &base);
+				res = res.barrett_mul_mod( &res, mu, &base);
 			}
 			res
 		}
@@ -105,9 +107,9 @@ impl Integer {
 
 		// Precompute g.
 		g[1] = self.clone(); // Note: Do we need to clone this?
-		g[2] = self.mul_mod( &g[1], &base);
+		g[2] = self.barrett_mul_mod( &g[1], &mu, &base);
 		for i in 1..(1 << (k - 1)) { // 1 .. 2^(k-1)-1
-			g[2*i + 1] = g[2*i - 1].mul_mod( &g[2], &base);
+			g[2*i + 1] = g[2*i - 1].barrett_mul_mod( &g[2], &mu, &base);
 		}
 
 		let mut a = Integer::from( 1);
@@ -124,13 +126,13 @@ impl Integer {
 				// println!("{}th bit: {}", i, e_i);
 
 				if e_i == 0 {
-					a = a.mul_mod( &a, &base); // Note: Square this eventually.
+					a = a.barrett_mul_mod( &a, &mu, &base); // Note: Square this eventually.
 					i = i - 1;
 				}
 				else if e_i == 1 {
 					let (len, str) = longest_bitstring( &e.content, b, i as Block, k as Block);
 					// println!("longest bs ({}): {}", len, str);
-					a = exp_2_exp_mod( &a, len, &base).mul_mod( &g[str], &base);
+					a = exp_2_exp_mod( &a, len, &mu, &base).barrett_mul_mod( &g[str], &mu, &base);
 					// println!("g[{}]: {}", str, g[str]);
 					// println!("a: {}", a);
 					i = i - (len as SignedBlock);
@@ -157,7 +159,7 @@ impl Integer {
 	*/
 
 	/// Perform fermat primality test k times. Will always produce false positives for carmichael numbers. Input must be greater than 4.
-	fn fermat_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn fermat_primality_test( &self, k : usize, mu : &Integer, rng : &mut OsRng) -> bool {
 		if k <= 0 {
 			return true
 		}
@@ -169,17 +171,17 @@ impl Integer {
 		// Generate a in [2,p-2]
 		let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
-		if a.exp_mod( &self.sub_borrow( &i1), self) != i1 {
+		if a.exp_mod( &self.sub_borrow( &i1), mu, self) != i1 {
 			// println!("Failed with: {}, {}, {}", a, self, a.exp_mod( &self.sub_borrow( &i1), self));
 			false
 		}
 		else {
-			self.fermat_primality_test( k - 1, rng)
+			self.fermat_primality_test( k - 1, mu, rng)
 		}
 	}
 
 	// Input must be greater than 3.
-	fn miller_rabin_primality_test( &self, k : usize, rng : &mut OsRng) -> bool {
+	fn miller_rabin_primality_test( &self, k : usize, mu : &Integer, rng : &mut OsRng) -> bool {
 		// Check if even.
 		if self.is_even() {
 			return false
@@ -199,7 +201,7 @@ impl Integer {
 			// Generate a in [2,p-2]
 			let a = Integer::random( self.sub_borrow( &i3), rng).add_borrow( &i2);
 
-			let mut x = a.exp_mod( &d, self);
+			let mut x = a.exp_mod( &d, mu, self);
 			if x == i1 || x == nm1 {
 				continue;
 			}
@@ -208,7 +210,7 @@ impl Integer {
 			let mut j = i1.clone();
 			while j < r {
 				// x = x.mul_borrow( &x).modulus( self); // TODO: use sqr_mut XXX
-				x = x.mul_mod( &x, self); // TODO: use sqr_mut XXX
+				x = x.barrett_mul_mod( &x, mu, self); // TODO: use sqr_mut XXX
 				if x == i1 {
 					return false
 				}
@@ -273,6 +275,10 @@ impl Integer {
 		else {
 			None
 		}
+	}
+
+	fn barrett_mul_mod( &self, rhs : &Integer, mu : &Integer, m : &Integer) -> Integer {
+		self.mul_borrow( rhs).barrett_reduction( mu, m)
 	}
 
 	// Precompute mu for barrett reduction.
