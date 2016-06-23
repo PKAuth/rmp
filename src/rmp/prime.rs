@@ -283,17 +283,17 @@ impl Integer {
 		i1.shl( e).modulus( m)
 	}
 
-	fn barrett_reduction( x : &Integer, mu : &Integer, m : &Integer) -> Integer {
+	fn barrett_reduction( &self, mu : &Integer, m : &Integer) -> Integer {
 		let k = m.size();
 		let block_size = BLOCK_SIZE as usize;
 		let em1 = Integer::from( 2 * (k - 1) * block_size); // Note: Should we check if this'll overflow?
 		let ep1 = Integer::from( 2 * (k + 1) * block_size);
 
-		let q = x.shr_borrow( &em1).mul_borrow( mu).shr_borrow( &ep1);
+		let q = self.shr_borrow( &em1).mul_borrow( mu).shr_borrow( &ep1);
 		
 		// r1 = x mod b^(k + 1)
-		let mut r1 = x.clone();
-		for _ in (k + 1)..x.size() {
+		let mut r1 = self.clone();
+		for _ in (k + 1)..self.size() {
 			r1.content.pop();
 		}
 
