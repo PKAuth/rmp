@@ -4,6 +4,10 @@ use super::super::internal::{pos_integer, neg_integer};
 impl Integer {
 	// Shift to the right `shift_c` bits, dropping the `skip_c` lowest blocks.
 	pub fn shr_block_borrow( &self, shift_c : Block, skip_c : usize) -> Integer {
+		if skip_c >= self.size() {
+			return Integer::from( 0)
+		}
+
 		// Note: Can the following be simplified? 
 		let upper_mask = if shift_c == 0 {0} else {Block::max_value() << (BLOCK_SIZE - shift_c)};
 		let lower_mask = Block::max_value() >> shift_c;

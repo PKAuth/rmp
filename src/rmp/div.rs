@@ -14,6 +14,12 @@ impl Integer {
 		a.modulus( self).is_zero()
 	}
 
+	// Returns the quotient.
+	pub fn div_borrow( &self, rhs : &Integer) -> Integer {
+		let (q,_) = self.div_mod( rhs);
+		q
+	}
+
 	// Returns the quotient and remainder.
 	pub fn div_mod(&self, rhs : &Integer) -> (Integer, Integer) {
 		// Check for div by 0.

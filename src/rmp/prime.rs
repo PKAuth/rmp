@@ -286,23 +286,24 @@ impl Integer {
 		let k = m.size();
 		let i1 = Integer::from(1);
 		let e = Integer::from( 2 * k * (BLOCK_SIZE as usize)); // Note: Should we check if this'll overflow?
-		i1.shl( e).modulus( m)
+		i1.shl( e).div_borrow( &m)
 	}
 
 	fn barrett_reduction( &self, mu : &Integer, m : &Integer) -> Integer {
 		let k = m.size();
 		let block_size = BLOCK_SIZE as usize;
-		let em1 = Integer::from( 2 * (k - 1) * block_size); // Note: Should we check if this'll overflow?
-		let ep1 = Integer::from( 2 * (k + 1) * block_size);
+		let em1 = Integer::from( (k - 1) * block_size); // Note: Should we check if this'll overflow?
+		let ep1 = Integer::from( (k + 1) * block_size);
 
 		let q = self.shr_borrow( &em1).mul_borrow( mu).shr_borrow( &ep1);
 		
 		// r1 = x mod b^(k + 1)
 		let mut r1 = self.clone();
-		for _ in (k + 1)..self.size() {
+		for _ in (k + 1)..r1.size() {
 			r1.content.pop();
 		}
 
+		// r2 = q * m mod b^(k + 1)
 		let mut r2 = q.mul_borrow( &m);
 		for _ in (k + 1)..r2.size() {
 			r2.content.pop();
@@ -312,7 +313,7 @@ impl Integer {
 
 		if r1.is_negative() {
 			let i1 = Integer::from( 1);
-			r1.add_mut( &i1.shl_borrow( &Integer::from( (k + 1) * block_size)));
+			r1.add_mut( &i1.shl_borrow( &ep1));
 		}
 
 		while r1 >= *m {
