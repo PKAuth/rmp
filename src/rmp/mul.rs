@@ -50,11 +50,58 @@ impl Mul for Integer {
 fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 	let negative = lhs.positive ^ rhs.positive;
 	
+	let ln = lhs.size();
+	let rn = rhs.size();
+
 	// TODO: various algorithms dependent on the size of inputs. XXX
-	let mut res = mul_base_case_positives( lhs, rhs);
+	let mut res;
+	if ln == rn && ln > 32 {
+		res = mul_daratsuba_positives( lhs, rhs);
+	}
+	else {
+		res = mul_base_case_positives( lhs, rhs);
+	}
+
 	if negative {
 		res.neg_mut();
 	}
+	res
+}
+
+fn mul_daratsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
+	// println!( "{} ({}) * {} ({})", lhs, lhs.size(), rhs, rhs.size());
+	// Base case.
+	let lc = lhs.size();
+	if lc <= 1 || rhs.size() <= 1 {
+		return mul_base_case_positives( lhs, rhs);
+	}
+
+	let n = lc / 2;
+
+	// Split arguments in half. 
+	// Note: Maybe we shouldn't do this? Just work with the indices?
+	let l1 = lhs.shr_block_borrow( 0, n);
+	let r1 = rhs.shr_block_borrow( 0, n);
+
+	// Lower halves.
+	let mut l2 = lhs.clone();
+	let mut r2 = rhs.clone();
+	for _ in 0..(lc - n) {
+		l2.content.pop();
+		r2.content.pop();
+	}
+
+	let t1 = mul_daratsuba_positives( &l1, &r1);
+	let t3 = mul_daratsuba_positives( &l2, &r2);
+	let mut t2 = mul_daratsuba_positives( &l1.add_borrow( &l2), &r1.add_borrow( &r2));
+	t2.sub_mut( &t1);
+	t2.sub_mut( &t3);
+
+	// Note: Can these just be copies?
+	let mut res = t1.shl_block_borrow(0, 2*n);
+	res.add_mut( &t2.shl_block_borrow(0, n));
+	res.add_mut( &t3);
+
 	res
 }
 
