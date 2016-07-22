@@ -56,7 +56,7 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 	// TODO: various algorithms dependent on the size of inputs. XXX
 	let mut res;
 	if ln == rn && ln > 32 {
-		res = mul_daratsuba_positives( lhs, rhs);
+		res = mul_karatsuba_positives( lhs, rhs);
 	}
 	else {
 		res = mul_base_case_positives( lhs, rhs);
@@ -68,42 +68,80 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 	res
 }
 
-fn mul_daratsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
-	// println!( "{} ({}) * {} ({})", lhs, lhs.size(), rhs, rhs.size());
-	// Base case.
-	let lc = lhs.size();
-	if lc <= 1 || rhs.size() <= 1 {
-		return mul_base_case_positives( lhs, rhs);
-	}
 
-	let n = lc / 2;
-
-	// Split arguments in half. 
-	// Note: Maybe we shouldn't do this? Just work with the indices?
-	let l1 = lhs.shr_block_borrow( 0, n);
-	let r1 = rhs.shr_block_borrow( 0, n);
-
-	// Lower halves.
-	let mut l2 = lhs.clone();
-	let mut r2 = rhs.clone();
-	for _ in 0..(lc - n) {
-		l2.content.pop();
-		r2.content.pop();
-	}
-
-	let t1 = mul_daratsuba_positives( &l1, &r1);
-	let t3 = mul_daratsuba_positives( &l2, &r2);
-	let mut t2 = mul_daratsuba_positives( &l1.add_borrow( &l2), &r1.add_borrow( &r2));
-	t2.sub_mut( &t1);
-	t2.sub_mut( &t3);
-
-	// Note: Can these just be copies?
-	let mut res = t1.shl_block_borrow(0, 2*n);
-	res.add_mut( &t2.shl_block_borrow(0, n));
-	res.add_mut( &t3);
-
-	res
+fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
+	let outputSize = lhs.size()*2; 
+	let mut h : Vec<Block> = vec![0; outputSize]; 
+	panic!("TODO!! "); 	
 }
+
+//Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
+fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block], 
+						d : &mut [Block]){
+	let k = c.len()/2; 	
+	let k_2 = c.len();
+	let k_3 = k+k_2; 
+	let k_4 = c.len()*2; 
+	//Step 4.2.1
+	mul_karatsuba_step1(d, k); 
+	mul_karatsuba_step2(d, a, b, k); 
+	//TODO: mul_karatsuba_helper(&c[0..k], &c[k..k_2], &d[k_3-1..k_4-1], &mut d[k..k_3-1]); 
+	// ---- Error is:cannot borrow `*d` as mutable because it is also borrowed
+	// as immutable 
+}
+
+fn mul_karatsuba_step1(d :&mut [Block], k : usize){
+	let mut carry = false; 
+	
+	for i in 0..k {
+		let j = i + k; 
+		let (mut x, p) =  d[j].overflowing_add(d[i]);
+		if carry {
+			let (y, e) = x.overflowing_add(1); 
+			carry = e || p;
+			x = y;
+		}
+		else{
+			carry = p; 
+		}
+		d[j] = x; 
+	}
+	if carry{
+		panic!("Hit carry at end of step1"); 
+	}
+}
+
+fn mul_karatsuba_step2(d : &mut[Block], a : &[Block], b : &[Block], k : usize){
+	let mut carry : LongBlock = 0; 
+	
+	for i in 0..k{
+		let ik = i+k;
+		let i3k = i + 3*k - 1; 
+		let a_i = a[i] as LongBlock;
+		let a_ik = a[ik] as LongBlock; 
+		let b_i = b[i] as LongBlock; 
+		let b_ik = b[ik] as LongBlock; 
+		let sum = a_i + a_ik + b_i + b_ik + carry; 
+		d[i3k] = sum as Block; 
+		carry = sum >> BLOCK_SIZE; 
+	}
+	if carry !=0{
+		panic!("Hit carry at end of step2"); 
+	}
+}
+
+fn mul_karatsuba_addVectorMut(lhs :&mut [Block] , rhs : &[Block]){
+	//for i in 0..lhs.size() {
+	//	//check for overflow
+	//	//TODO:: HEREEE
+	//	if lhs.overflowing_add(rhs){
+	//			
+	//	}
+	//	d[b] += d[b-k]; 
+	//}
+	panic!("TODO: AddVectorMut"); 
+}
+
 
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
 fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
