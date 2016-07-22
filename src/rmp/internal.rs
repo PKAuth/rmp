@@ -3,9 +3,7 @@
 use super::{Block, LongBlock, Integer, BLOCK_SIZE};
 
 pub fn normalize_leading_zeroes( v : &mut Integer) {
-	while v.size() > 0 && v.content[v.size() - 1] == 0 {
-		v.content.pop();
-	}
+	remove_leading_zeroes( &mut v.content);
 
 	if v.size() == 0 {
 		v.positive = true;
