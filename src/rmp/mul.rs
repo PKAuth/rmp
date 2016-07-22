@@ -68,118 +68,80 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 	res
 }
 
-enum KCode {
-	KCodeInt(Block),
-	KCode1, 
-	KCode2, 
-	KCode3, 
-	KCodeVec(Vec<Block>),
-}
 
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
-	let mut u : Vec<Block> = Vec::new();
-	let mut v : Vec<Block> = Vec::new();
-	let mut c : Vec<KCode> = Vec::new();
-	let mut w : Vec<Block> = Vec::new();
-	let mut qTable : Vec<Block> = Vec::new();
-	let mut rTable : Vec<Block> = Vec::new();
+	let outputSize = lhs.size()*2; 
+	let mut h : Vec<Block> = vec![0; outputSize]; 
+	panic!("TODO!! "); 	
+}
 
-	let mut k = 1; 
-	//Not sure about the constants here... ref C1 in Knuth Art of Comp Programming
-	qTable.push(16); 
-	qTable.push(16); 
-	rTable.push(4); 
-	rTable.push(4); 
-	let mut Q = 4; 
-	let mut R : Block = 2; 
-	//C1[Compute q, r tables]
-	while((qTable[k-1] + qTable[k]) < (lhs.size() as Block) * BLOCK_SIZE ){
-		if((R+1).pow(2) <= Q){
-			Q += R;
-			R = R + 1
+//Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
+fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block], 
+						d : &mut [Block]){
+	let k = c.len()/2; 	
+	let k_2 = c.len();
+	let k_3 = k+k_2; 
+	let k_4 = c.len()*2; 
+	//Step 4.2.1
+	mul_karatsuba_step1(d, k); 
+	mul_karatsuba_step2(d, a, b, k); 
+	//TODO: mul_karatsuba_helper(&c[0..k], &c[k..k_2], &d[k_3-1..k_4-1], &mut d[k..k_3-1]); 
+	// ---- Error is:cannot borrow `*d` as mutable because it is also borrowed
+	// as immutable 
+}
+
+fn mul_karatsuba_step1(d :&mut [Block], k : usize){
+	let mut carry = false; 
+	
+	for i in 0..k {
+		let j = i + k; 
+		let (mut x, p) =  d[j].overflowing_add(d[i]);
+		if carry {
+			let (y, e) = x.overflowing_add(1); 
+			carry = e || p;
+			x = y;
 		}
 		else{
-			Q+= R; 
+			carry = p; 
 		}
-		//q_k <- 2^Q 
-		qTable.push(1 << Q);
-		//r_k <- 2^R 
-		rTable.push(1 << R);
-		k += 1; 
+		d[j] = x; 
 	}
-
-	//C2[Put u, v, on stack]
-	c.push(KCode::KCode1); 
-	//TODO: For us, k = 5 so these would need to be padded w/0's to be 9216...
-	//c.push(KCode::KCodeVec(lhs.content)); 
-	//c.push(KCode::KCodeVec(rhs.content)); 
-	
-	//C3 [Check recursion level]
-	k -= 1;  
-	if(k == 0){
-		//TODO: Either need to implement * for Vec<Block> or find a way to
-		//unwrap further into a longblock  
-		//let u_tmp = c.pop().unwrap() as LongBlock;
-		//let v_tmp = c.pop().unwrap() as LongBlock;
-		
-		//w = u_tmp * v_tmp; 
-		//Going to step C10 [Return]... 
-		k += 1;
-		//let stackCode = c.pop().unwrap(); 
-		panic!("TODO!!!");  
+	if carry{
+		panic!("Hit carry at end of step1"); 
 	}
-	else {
-		//set r <- r_k, q<- q_k, p <- q_(k-1_ + q_k) 
-		//??: Isn't r already set to r_k and same with q as q_k???
-		let p = qTable[k-1] + qTable[k]; 
-		panic!("TODO: finish me up!"); 
-	}
-
 }
-//fn mul_daratsuba_positives( lhs : &Vec<Block>, lStart : usize, lSize : usize,
-//rhs : &Vec<Block>, rStart : usize, rSize :usize, res : &mut Vec<Block>)  {
-//	// println!( "{} ({}) * {} ({})", lhs, lhs.size(), rhs, rhs.size());
-//	// Base case.
-//	//let lc = lhs.size();
-//	if lSize <= 1 || rSize <= 1 {
-//		return mul_base_case_positives( lhs, rhs);
-//	}
-//
-//	let n1 = lSize / 2;
-//	let n2 = lSize - n1 		
-//
-//	let l1Start = lStart + n1; 
-//	let l2Start = lStart; 
-//	let r1Start = rStart + n1; 
-//	let r2Start = rStart; 
-//	// Split arguments in half. 
-//	// Note: Maybe we shouldn't do this? Just work with the indices?
-//	//let l1 = lhs.shr_block_borrow( 0, n);
-//	//let r1 = rhs.shr_block_borrow( 0, n);
-//	
-//	// Lower halves.
-//	//let mut l2 = lhs.clone();
-//	//let mut r2 = rhs.clone();
-//	//l2.content.truncate(n); 
-//	//r2.content.truncate(n); 
-//	//for _ in 0..(lc - n) {
-//	//	l2.content.pop();
-//	//	r2.content.pop();
-//	//}
-//
-//	let t1 = mul_daratsuba_positives( &lhs, l1Start, n1, &rhs, r1Start, n1, res);
-//	let t3 = mul_daratsuba_positives( &lhs, l2Start, n2, &rhs, r2Start, n2, res);
-//	let mut t2 = mul_daratsuba_positives( &l1.add_borrow( &l2), &r1.add_borrow( &r2));
-//	t2.sub_mut( &t1);
-//	t2.sub_mut( &t3);
-//
-//	// Note: Can these just be copies?
-//	let mut res = t1.shl_block_borrow(0, 2*n);
-//	res.add_mut( &t2.shl_block_borrow(0, n));
-//	res.add_mut( &t3);
-//
-//	res
-//}
+
+fn mul_karatsuba_step2(d : &mut[Block], a : &[Block], b : &[Block], k : usize){
+	let mut carry : LongBlock = 0; 
+	
+	for i in 0..k{
+		let ik = i+k;
+		let i3k = i + 3*k - 1; 
+		let a_i = a[i] as LongBlock;
+		let a_ik = a[ik] as LongBlock; 
+		let b_i = b[i] as LongBlock; 
+		let b_ik = b[ik] as LongBlock; 
+		let sum = a_i + a_ik + b_i + b_ik + carry; 
+		d[i3k] = sum as Block; 
+		carry = sum >> BLOCK_SIZE; 
+	}
+	if carry !=0{
+		panic!("Hit carry at end of step2"); 
+	}
+}
+
+fn mul_karatsuba_addVectorMut(lhs :&mut [Block] , rhs : &[Block]){
+	//for i in 0..lhs.size() {
+	//	//check for overflow
+	//	//TODO:: HEREEE
+	//	if lhs.overflowing_add(rhs){
+	//			
+	//	}
+	//	d[b] += d[b-k]; 
+	//}
+	panic!("TODO: AddVectorMut"); 
+}
+
 
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
 fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
