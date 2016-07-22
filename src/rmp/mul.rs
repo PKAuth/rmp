@@ -81,11 +81,20 @@ fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block],
 	let k = c.len()/2; 	
 	let k_2 = c.len();
 	let k_3 = k+k_2; 
-	let k_4 = c.len()*2; 
-	//Step 4.2.1
+	// let k_4 = c.len()*2; 
+
+	// Step 1
 	mul_karatsuba_step1(d, k); 
+
+	// Step 2
 	mul_karatsuba_step2(d, a, b, k); 
-	//TODO: mul_karatsuba_helper(&c[0..k], &c[k..k_2], &d[k_3-1..k_4-1], &mut d[k..k_3-1]); 
+
+	// Step 3
+	{
+		let ( dl, dr) = d.split_at_mut( k_3 - 1);
+		mul_karatsuba_helper(&c[0..k], &c[k..k_2], &dr[0..k], &mut dl[k..]); 
+	}
+	// mul_karatsuba_helper(&c[0..k], &c[k..k_2], &d[k_3-1..k_4-1], &mut d[k..k_3-1]); 
 	// ---- Error is:cannot borrow `*d` as mutable because it is also borrowed
 	// as immutable 
 }
