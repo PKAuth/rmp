@@ -73,14 +73,19 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	let outputSize = lhs.size()*2; 
 	let mut h : Vec<Block> = vec![0; outputSize]; 
 	panic!("TODO!! "); 	
+	//TODO: ADD INITIAL CALL TO HELPER BELOW
 }
 
 //Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
 fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block], 
 						d : &mut [Block]){
+	//TODO: ADD BASE CASE 
+
+
+	//TODO: Are these k variables worth? ie vs computing 2*k and 3*k ...
 	let k = c.len()/2; 	
-	let k_2 = c.len();
-	let k_3 = k+k_2; 
+	//let k_2 = c.len();
+	//let k_3 = k+k_2; 
 	// let k_4 = c.len()*2; 
 
 	// Step 1
@@ -91,12 +96,30 @@ fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block],
 
 	// Step 3
 	{
-		let ( dl, dr) = d.split_at_mut( k_3 - 1);
-		mul_karatsuba_helper(&c[0..k], &c[k..k_2], &dr[0..k], &mut dl[k..]); 
+		let ( dl, dr) = d.split_at_mut( k*3 - 1);
+		mul_karatsuba_helper(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
 	}
-	// mul_karatsuba_helper(&c[0..k], &c[k..k_2], &d[k_3-1..k_4-1], &mut d[k..k_3-1]); 
-	// ---- Error is:cannot borrow `*d` as mutable because it is also borrowed
-	// as immutable 
+	//Step 4
+	mul_karatsuba_step4(d, k); 
+
+	//Step 5
+	mul_karatsuba_helper(&a[0..k], &b[0..k], &c[0..k], &mut d[0..(2*k -1)]); 
+
+	//Step 6
+	mul_karatsuba_step6(d, k); 
+	//mul_karatsuba_sub(d, 2*k, 2*k, k, k-1); 
+
+	//Step 7
+	mul_karatsuba_step7(d, k); 
+
+	//Step 8
+	mul_karatsuba_helper(&a[k..2*k], &b[k..k*2], &c[k..2*k], &mut d[2*k..4*k-1]);
+
+	//Step 9
+	mul_karatsuba_step9(d, k); 
+	//Step 10
+	mul_karatsuba_step10(d, k); 
+
 }
 
 fn mul_karatsuba_step1(d :&mut [Block], k : usize){
@@ -137,6 +160,68 @@ fn mul_karatsuba_step2(d : &mut[Block], a : &[Block], b : &[Block], k : usize){
 	if carry !=0{
 		panic!("Hit carry at end of step2"); 
 	}
+}
+
+fn mul_karatsuba_step4(d : &mut[Block], k : usize){
+	let mut carry : LongBlock = 0; 
+	for i in 0 .. k {
+		let ik = i + k; 
+		//Question for Dan: why 2k..3k-2?
+		let i2k = i + 2*k; 
+		let i3k = i + 3*k - 1; 
+		let d_ik = d[ik] as LongBlock; 
+		let d_i2k = 
+			if i == (k - 1) {
+				0 
+			} 
+			else {
+				d[i2k] as LongBlock
+			}; 
+		let sum = d_ik + d_i2k + carry;  
+		d[i3k] = sum as Block; 
+		carry = sum >> BLOCK_SIZE;
+	}
+	if carry !=0{
+		panic!("Hit carry at end of step4"); 
+	}
+}
+
+fn mul_karatsuba_step6(d : &mut[Block], k : usize){
+	mul_karatsuba_sub(d, 2*k, 2*k, k, k-1); 
+}
+fn mul_karatsuba_step7(d : &mut[Block], k : usize){
+	mul_karatsuba_sub(d, k, 3*k-1, 0, k); 
+}
+
+fn mul_karatsuba_step9(d : &mut[Block], k : usize){
+	mul_karatsuba_sub(d, k, k, 2*k, k); 
+}
+fn mul_karatsuba_step10(d : &mut[Block], k : usize){
+	mul_karatsuba_sub(d, 2*k, 2*k, 3*k, k-1); 
+}
+fn mul_karatsuba_sub(d : &mut[Block], output_offset : usize, left_offset :
+					usize, right_offset : usize, len: usize){
+	let mut carry = false; 
+	for i in (0 .. len){
+		let left_i = i + left_offset; 
+		let right_i = i + right_offset; 
+		let left = d[left_i]; 
+		let right = d[right_i];  
+		let (mut res, resCarry) = left.overflowing_sub(right);  
+		if (carry){
+			let(r, rc) = res.overflowing_sub(1); 
+			res = r;
+			carry = rc || resCarry; 
+		}
+		else{
+			carry = resCarry; 
+		}
+		d[i+output_offset] = res; 
+	}
+	if carry{
+		panic!("It carried during subtraction!!"); 
+	}
+
 }
 
 fn mul_karatsuba_addVectorMut(lhs :&mut [Block] , rhs : &[Block]){
