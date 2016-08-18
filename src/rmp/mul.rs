@@ -372,45 +372,55 @@ fn mul_karatsuba_sub(d : &mut[Block], output_offset : usize, left_offset :
 	}
 
 }
+fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
+	for i in 0 .. lhs.len(){
+		let li : LongBlock = lhs[i] as LongBlock;
 
-fn mul_karatsuba_addVectorMut(lhs :&mut [Block] , rhs : &[Block]){
-	//for i in 0..lhs.size() {
-	//	//check for overflow
-	//	//TODO:: HEREEE
-	//	if lhs.overflowing_add(rhs){
-	//			
-	//	}
-	//	d[b] += d[b-k]; 
-	//}
-	panic!("TODO: AddVectorMut"); 
+		// if li == 0, ... skip
+		if li == 0 {
+			continue;
+		}
+		let mut carry : LongBlock = 0; 
+		for j in 0 .. rhs.len(){
+			let rj : LongBlock = rhs[j] as LongBlock;
+			let t = li * rj + (out[i+j] as LongBlock) + carry; 
+			carry = t >> BLOCK_SIZE; 
+			out[i+j] = t as Block; 
+		}	
+		out[i+rhs.len()] = carry as Block;
+	}
 }
-
 
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
 fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	// Init result with 0s.
 	// let mut res : Vec<Block> = Vec::with_capacity( lhs.size() + rhs.size() + 1);
 	// res.resize( lhs.size() + rhs.size() + 1, 0);
+//	let mut res : Vec<Block> = vec![0; lhs.size() + rhs.size() + 1];
+//
+//	for i in 0..lhs.size() {
+//		let li : LongBlock = lhs.content[i] as LongBlock;
+//
+//		// if li == 0, ... skip
+//		if li == 0 {
+//			continue;
+//		}
+//
+//		let mut carry : LongBlock = 0;
+//		for j in 0..rhs.size() {
+//			let rj : LongBlock = rhs.content[j] as LongBlock;
+//			let t = li * rj + (res[i + j] as LongBlock) + carry; // TODO: Why do we add the carry here? XXX
+//			carry = t >> BLOCK_SIZE;
+//			res[i + j] = t as Block; // Mask upper bits.
+//		}
+//		res[i + rhs.size()] = carry as Block;
+//	}
+//
+//	pos_integer( res)
+
+
 	let mut res : Vec<Block> = vec![0; lhs.size() + rhs.size() + 1];
-
-	for i in 0..lhs.size() {
-		let li : LongBlock = lhs.content[i] as LongBlock;
-
-		// if li == 0, ... skip
-		if li == 0 {
-			continue;
-		}
-
-		let mut carry : LongBlock = 0;
-		for j in 0..rhs.size() {
-			let rj : LongBlock = rhs.content[j] as LongBlock;
-			let t = li * rj + (res[i + j] as LongBlock) + carry; // TODO: Why do we add the carry here? XXX
-			carry = t >> BLOCK_SIZE;
-			res[i + j] = t as Block; // Mask upper bits.
-		}
-		res[i + rhs.size()] = carry as Block;
-	}
-
+	mul_base_case(&lhs.content, &rhs.content, &mut res); 
 	pos_integer( res)
 }
 
