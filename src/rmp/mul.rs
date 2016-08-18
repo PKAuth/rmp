@@ -2,6 +2,7 @@ use std::ops::Mul;
 
 use super::internal::pos_integer;
 use super::{Integer, Block, LongBlock, BLOCK_SIZE};
+static KARATSUBA_LIMIT : usize = 16;
 
 impl Integer {
 	pub fn mul_borrow( &self, rhs : &Integer) -> Integer {
@@ -71,16 +72,37 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	let outputSize = lhs.size()*2; 
+	let lhsHalfSize = lhs.size()/2; 
 	let mut h : Vec<Block> = vec![0; outputSize]; 
-	panic!("TODO!! "); 	
 	//TODO: ADD INITIAL CALL TO HELPER BELOW
+	//Step 0.A - Preprocess lhs into lhs0 and lhs1
+	//			lhs0 and lhs1 are ReadOnly vars 
+	//    TODO: Need syntax for spliting a Integer
+	//			into 2 halve of type &[Block]
+
+	//NOTE: Not sure how to compute f^0 and f^1 
+	//		divide by 2?
+	//		set them arbitrarily?
+	let blockLhs = &lhs.content; 
+	let (lhs0, lhs1) = blockLhs.split_at(lhsHalfSize);
+	let blockRhs = &rhs.content;
+	
+	let zero = vec![0; lhs.size()]; 
+
+	mul_karatsuba_helper(blockLhs, &zero, blockRhs, &mut h); 
+
+	pos_integer(h) 
 }
 
 //Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
 fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block], 
 						d : &mut [Block]){
 	//TODO: ADD BASE CASE 
-
+	//Base case: Calling traditional/simple mul on small inputs
+	if c.len() < KARATSUBA_LIMIT{
+		panic!("TODO"); 
+		return
+	}
 
 	//TODO: Are these k variables worth? ie vs computing 2*k and 3*k ...
 	let k = c.len()/2; 	
