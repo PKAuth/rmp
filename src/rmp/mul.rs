@@ -89,13 +89,123 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	
 	let zero = vec![0; lhs.size()]; 
 
-	mul_karatsuba_helper(blockLhs, &zero, blockRhs, &mut h); 
+//	mul_karatsuba_helper(blockLhs, &zero, blockRhs, &mut h); 
 
 	pos_integer(h) 
 }
+//Top level call in which condition 1 and 2 are not met
+
+fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],
+						d : &mut [Block]){
+	if c.len() < KARATSUBA_LIMIT{
+		panic!("TODO"); 
+		return
+	}
+
+	let k = c.len()/2; 	
+	//Step 1
+	mul_karatsuba_step1_top(d, c, k); 
+
+	// Step 2
+	mul_karatsuba_step2_1(d, a, k); 
+	
+	// Step 3
+	{
+		let ( dl, dr) = d.split_at_mut( k*3 - 1);
+		panic!("TODO!! Step 3 of top level call to Karatsuba_helper"); 
+		return; 
+		//ASK DAN: Which arg do we omit here? 	
+		//mul_karatsuba_helper_top(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
+	}
+	//Step 4
+	mul_karatsuba_step4(d, k); 
+
+	//Step 5
+	mul_karatsuba_helper_top(&a[0..k], &c[0..k], &mut d[0..(2*k -1)]); 
+
+	//Step 6
+	mul_karatsuba_step6(d, k); 
+	//mul_karatsuba_sub(d, 2*k, 2*k, k, k-1); 
+
+	//Step 7
+	mul_karatsuba_step7(d, k); 
+
+	//Step 8
+	mul_karatsuba_helper_1(&a[k..2*k], &c[k..2*k], &mut d[2*k..4*k-1]);
+
+	//Step 9
+	mul_karatsuba_step9(d, k); 
+	//Step 10
+	mul_karatsuba_step10(d, k); 
+}
+fn mul_karatsuba_step1_top(d : &mut [Block], c : &[Block], k: usize ){
+	let mut carry = false; 
+	
+	for i in 0..k {
+		let j = i + k; 
+		let (mut x, p) =  c[j].overflowing_add(c[i]);
+		if carry {
+			let (y, e) = x.overflowing_add(1); 
+			carry = e || p;
+			x = y;
+		}
+		else{
+			carry = p; 
+		}
+		d[i] = x; 
+	}
+	if carry{
+		panic!("Hit carry at end of step1"); 
+	}
+
+
+
+}
+
+//Need to satisfy condition 4.1
+fn mul_karatsuba_helper_1(a : &[Block], c : &[Block], 
+						d : &mut [Block]){
+	if c.len() < KARATSUBA_LIMIT{
+		panic!("TODO"); 
+		return
+	}
+
+	let k = c.len()/2; 	
+	// Step 1
+	mul_karatsuba_step1(d, k); 
+
+	// Step 2
+	mul_karatsuba_step2_1(d, a, k); 
+
+	// Step 3
+	{
+		let ( dl, dr) = d.split_at_mut( k*3 - 1);
+		mul_karatsuba_helper_1_2(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
+	}
+	//Step 4
+	mul_karatsuba_step4(d, k); 
+
+	//Step 5
+	mul_karatsuba_helper_1(&a[0..k], &c[0..k], &mut d[0..(2*k -1)]); 
+
+	//Step 6
+	mul_karatsuba_step6(d, k); 
+	//mul_karatsuba_sub(d, 2*k, 2*k, k, k-1); 
+
+	//Step 7
+	mul_karatsuba_step7(d, k); 
+
+	//Step 8
+	mul_karatsuba_helper_1(&a[k..2*k], &c[k..2*k], &mut d[2*k..4*k-1]);
+
+	//Step 9
+	mul_karatsuba_step9(d, k); 
+	//Step 10
+	mul_karatsuba_step10(d, k); 
+}
 
 //Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
-fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block], 
+fn mul_karatsuba_helper_1_2(a : &[Block], b : &[Block], c : &[Block], 
 						d : &mut [Block]){
 	//TODO: ADD BASE CASE 
 	//Base case: Calling traditional/simple mul on small inputs
@@ -119,13 +229,13 @@ fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block],
 	// Step 3
 	{
 		let ( dl, dr) = d.split_at_mut( k*3 - 1);
-		mul_karatsuba_helper(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
+		mul_karatsuba_helper_1_2(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
 	}
 	//Step 4
 	mul_karatsuba_step4(d, k); 
 
 	//Step 5
-	mul_karatsuba_helper(&a[0..k], &b[0..k], &c[0..k], &mut d[0..(2*k -1)]); 
+	mul_karatsuba_helper_1_2(&a[0..k], &b[0..k], &c[0..k], &mut d[0..(2*k -1)]); 
 
 	//Step 6
 	mul_karatsuba_step6(d, k); 
@@ -135,7 +245,7 @@ fn mul_karatsuba_helper(a : &[Block], b : &[Block], c : &[Block],
 	mul_karatsuba_step7(d, k); 
 
 	//Step 8
-	mul_karatsuba_helper(&a[k..2*k], &b[k..k*2], &c[k..2*k], &mut d[2*k..4*k-1]);
+	mul_karatsuba_helper_1_2(&a[k..2*k], &b[k..k*2], &c[k..2*k], &mut d[2*k..4*k-1]);
 
 	//Step 9
 	mul_karatsuba_step9(d, k); 
@@ -162,6 +272,23 @@ fn mul_karatsuba_step1(d :&mut [Block], k : usize){
 	}
 	if carry{
 		panic!("Hit carry at end of step1"); 
+	}
+}
+
+fn mul_karatsuba_step2_1(d : &mut[Block], a : &[Block], k : usize){
+	let mut carry : LongBlock = 0; 
+	
+	for i in 0..k{
+		let ik = i+k;
+		let i3k = i + 3*k - 1; 
+		let a_i = a[i] as LongBlock;
+		let a_ik = a[ik] as LongBlock; 
+		let sum = a_i + a_ik + carry; 
+		d[i3k] = sum as Block; 
+		carry = sum >> BLOCK_SIZE; 
+	}
+	if carry !=0{
+		panic!("Hit carry at end of step2_1"); 
 	}
 }
 
