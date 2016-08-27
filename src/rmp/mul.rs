@@ -83,12 +83,12 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	//NOTE: Not sure how to compute f^0 and f^1 
 	//		divide by 2?
 	//		set them arbitrarily?
-	let blockLhs = &lhs.content; 
-	let (lhs0, lhs1) = blockLhs.split_at(lhsHalfSize);
-	let blockRhs = &rhs.content;
-	
-	let zero = vec![0; lhs.size()]; 
-
+	//let blockLhs = &lhs.content; 
+	//let (lhs0, lhs1) = blockLhs.split_at(lhsHalfSize);
+	//let blockRhs = &rhs.content;
+	//
+	//let zero = vec![0; lhs.size()]; 
+	mul_karatsuba_helper_top(&lhs.content, &rhs.content, &mut h); 
 //	mul_karatsuba_helper(blockLhs, &zero, blockRhs, &mut h); 
 
 	pos_integer(h) 
@@ -112,10 +112,11 @@ fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],
 	// Step 3
 	{
 		let ( dl, dr) = d.split_at_mut( k*3 - 1);
-		panic!("TODO!! Step 3 of top level call to Karatsuba_helper"); 
-		return; 
-		//ASK DAN: Which arg do we omit here? 	
-		//mul_karatsuba_helper_top(&c[0..k], &c[k..k*2], &dr[0..k], &mut dl[k..]); 
+		let ( dll, dlr) = dl.split_at_mut( k ); 
+		//panic!("TODO!! Step 3 of top level call to Karatsuba_helper"); 
+		//return; 
+		//ASK Dan: Which arg do we omit here? 	
+		mul_karatsuba_helper_top(dll, &dr[0..k], dlr); 
 	}
 	//Step 4
 	mul_karatsuba_step4(d, k); 
@@ -155,10 +156,11 @@ fn mul_karatsuba_step1_top(d : &mut [Block], c : &[Block], k: usize ){
 		d[i] = x; 
 	}
 	if carry{
-		panic!("Hit carry at end of step1"); 
+		//WARNING: This may cause out-of-bounds issues
+		panic!("Carry at step1_top d[k]={}", d[k] );  
+		//d[k] = 1; 
+		//panic!("Hit carry at end of step1"); 
 	}
-
-
 
 }
 
@@ -210,7 +212,8 @@ fn mul_karatsuba_helper_1_2(a : &[Block], b : &[Block], c : &[Block],
 	//TODO: ADD BASE CASE 
 	//Base case: Calling traditional/simple mul on small inputs
 	if c.len() < KARATSUBA_LIMIT{
-		panic!("TODO"); 
+		panic!("TODO");
+		// fn mul_base_case( , out : &mut[Block])
 		return
 	}
 
@@ -288,7 +291,9 @@ fn mul_karatsuba_step2_1(d : &mut[Block], a : &[Block], k : usize){
 		carry = sum >> BLOCK_SIZE; 
 	}
 	if carry !=0{
-		panic!("Hit carry at end of step2_1"); 
+		//WARNING Overflow may occur!
+		panic!("WARNING: Carry found at step2_1 d[4k-1]={}", d[4*k-1]); 
+		//d[4*k-1] = carry as Block;  
 	}
 }
 
