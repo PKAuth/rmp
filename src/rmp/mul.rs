@@ -98,7 +98,7 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],
 						d : &mut [Block]){
 	if c.len() < KARATSUBA_LIMIT{
-		panic!("TODO"); 
+		mul_base_case(a , c, d); 
 		return
 	}
 
@@ -168,7 +168,7 @@ fn mul_karatsuba_step1_top(d : &mut [Block], c : &[Block], k: usize ){
 fn mul_karatsuba_helper_1(a : &[Block], c : &[Block], 
 						d : &mut [Block]){
 	if c.len() < KARATSUBA_LIMIT{
-		panic!("TODO"); 
+		mul_base_case(a , c, d); 
 		return
 	}
 
@@ -206,14 +206,38 @@ fn mul_karatsuba_helper_1(a : &[Block], c : &[Block],
 	mul_karatsuba_step10(d, k); 
 }
 
+fn add_blocks(a : &[Block], b: &[Block]) -> Vec<Block>{
+	assert!(a.len() == b.len()); 
+	//assuming they're the same len
+	let mut res = vec![0; a.len()+1]; 
+	let mut carry = false; 
+	for i in 0..a.len() {
+		let (mut x, p) =  a[i].overflowing_add(b[i]);
+		if carry {
+			let (y, e) = x.overflowing_add(1); 
+			carry = e || p;
+			x = y;
+		}
+		else{
+			carry = p; 
+		}
+		res[i] = x;
+	}
+	if carry {	
+		res[a.len()] = 1; 
+	}
+	res 
+}
+
+
 //Dan Roche's Thesis on Space Efficient Karatsuba Multiplication pg 58
 fn mul_karatsuba_helper_1_2(a : &[Block], b : &[Block], c : &[Block], 
 						d : &mut [Block]){
 	//TODO: ADD BASE CASE 
 	//Base case: Calling traditional/simple mul on small inputs
 	if c.len() < KARATSUBA_LIMIT{
-		panic!("TODO");
-		// fn mul_base_case( , out : &mut[Block])
+		let f = add_blocks(a, b);  	
+		mul_base_case( &f, c, d ); 
 		return
 	}
 
