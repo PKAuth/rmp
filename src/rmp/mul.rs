@@ -74,6 +74,7 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	let outputSize = lhs.size()*2; 
 	let lhsHalfSize = lhs.size()/2; 
 	let mut h : Vec<Block> = vec![0; outputSize]; 
+	println!("************** h.len: {}", h.len()); 
 	//TODO: ADD INITIAL CALL TO HELPER BELOW
 	//Step 0.A - Preprocess lhs into lhs0 and lhs1
 	//			lhs0 and lhs1 are ReadOnly vars 
@@ -111,6 +112,8 @@ fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],
 	
 	// Step 3
 	{
+		//TODO: FIX THIS!!! <<- Not sure how to handle assigning more space to
+		//do the split_at_mut with variable d here
 		let ( dl, dr) = d.split_at_mut( k*3 - 1);
 		let ( dll, dlr) = dl.split_at_mut( k ); 
 		//panic!("TODO!! Step 3 of top level call to Karatsuba_helper"); 
@@ -155,10 +158,14 @@ fn mul_karatsuba_step1_top(d : &mut [Block], c : &[Block], k: usize ){
 		}
 		d[i] = x; 
 	}
-	if carry{
+	let mut i = k; 
+	while carry{
 		//WARNING: This may cause out-of-bounds issues
-		panic!("Carry at step1_top d[k]={}", d[k] );  
-		//d[k] = 1; 
+		//panic!("Carry at step1_top d[k]={}", d[k] );  
+		let (res, c) = d[i].overflowing_add(1);  
+		d[i] = res; 
+		carry = c; 
+		i += 1; 
 		//panic!("Hit carry at end of step1"); 
 	}
 
@@ -308,15 +315,23 @@ fn mul_karatsuba_step2_1(d : &mut[Block], a : &[Block], k : usize){
 	for i in 0..k{
 		let ik = i+k;
 		let i3k = i + 3*k - 1; 
+		println!("before a_i"); 
 		let a_i = a[i] as LongBlock;
+		println!("before a_ik"); 
 		let a_ik = a[ik] as LongBlock; 
 		let sum = a_i + a_ik + carry; 
+		println!("i3k: {}", i3k); 
+		println!("d.len: {}", d.len()); 
 		d[i3k] = sum as Block; 
 		carry = sum >> BLOCK_SIZE; 
 	}
-	if carry !=0{
+	let mut i = 4*k - 2; 
+	while carry !=0{
 		//WARNING Overflow may occur!
-		panic!("WARNING: Carry found at step2_1 d[4k-1]={}", d[4*k-1]); 
+		let sum = d[i] as LongBlock + carry; 
+		d[i] = sum as Block; 
+		carry = sum >> BLOCK_SIZE; 
+		//panic!("WARNING: Carry found at step2_1 d[4k-2]={}", d[4*k-2]); 
 		//d[4*k-1] = carry as Block;  
 	}
 }
@@ -416,7 +431,10 @@ fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 			carry = t >> BLOCK_SIZE; 
 			out[i+j] = t as Block; 
 		}	
+		
+		println!("Before out"); 
 		out[i+rhs.len()] = carry as Block;
+		println!("After out"); 
 	}
 }
 
@@ -448,7 +466,7 @@ fn mul_base_case_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 //	pos_integer( res)
 
 
-	let mut res : Vec<Block> = vec![0; lhs.size() + rhs.size() + 1];
+	let mut res : Vec<Block> = vec![0; lhs.size() + rhs.size()];
 	mul_base_case(&lhs.content, &rhs.content, &mut res); 
 	pos_integer( res)
 }
