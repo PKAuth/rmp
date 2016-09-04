@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use super::internal::pos_integer;
+use super::internal::{pos_integer, ceiling, ceiling_log_two};
 use super::{Integer, Block, LongBlock, BLOCK_SIZE};
 static KARATSUBA_LIMIT : usize = 16;
 
@@ -56,7 +56,7 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 	// TODO: various algorithms dependent on the size of inputs. XXX
 	let mut res;
-	if ln == rn && ln > 32 {
+	if ln == rn && ln >= KARATSUBA_LIMIT {
 		res = mul_karatsuba_positives( lhs, rhs);
 	}
 	else {
@@ -71,29 +71,55 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
-	let outputSize = lhs.size()*2; 
-	let lhsHalfSize = lhs.size()/2; 
-	let mut h : Vec<Block> = vec![0; outputSize]; 
-	println!("************** h.len: {}", h.len()); 
-	//TODO: ADD INITIAL CALL TO HELPER BELOW
-	//Step 0.A - Preprocess lhs into lhs0 and lhs1
-	//			lhs0 and lhs1 are ReadOnly vars 
-	//    TODO: Need syntax for spliting a Integer
-	//			into 2 halve of type &[Block]
 
-	//NOTE: Not sure how to compute f^0 and f^1 
-	//		divide by 2?
-	//		set them arbitrarily?
-	//let blockLhs = &lhs.content; 
-	//let (lhs0, lhs1) = blockLhs.split_at(lhsHalfSize);
-	//let blockRhs = &rhs.content;
+	// Memory usage justification:
+	// m(1) = 2
+	// m(2) = 4
+	// m(3) = 6
+	// m(2k) = 4k + m(k + 1)          [even]
+	// m(2k-1) = 4k - 2 + m(k + 1)    [odd]
+	// 
+	// Recurrence:
+	// m(n) ~ c + 4(n - 3) + 6 lg(n - 3) - 4
 	//
-	//let zero = vec![0; lhs.size()]; 
-	mul_karatsuba_helper_top(&lhs.content, &rhs.content, &mut h); 
-//	mul_karatsuba_helper(blockLhs, &zero, blockRhs, &mut h); 
+	// Overapproximation:
+	// m(n) ~ 4n + 6 lg(n)
+
+	let n = lhs.size();
+	let outputSize = n * 4 + 6 * ceiling_log_two( n);
+	let mut h : Vec<Block> = vec![0; outputSize]; 
+
+	mul_karatsuba_helper(&lhs.content, &rhs.content, &mut h); 
+
+	panic!("TODO: cut off scratch space. XXX");
 
 	pos_integer(h) 
 }
+
+fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
+	let n = f.len();
+
+	// Check base case.
+	if n < KARATSUBA_LIMIT {
+		mul_base_case( f, g, d); // JP: Should we cut d off? 
+		return;
+	}
+
+	let k = ceiling( n, 2); 
+
+	let (f0, f1) = f.split_at( k);
+	let (g0, g1) = g.split_at( k);
+
+	// First recursive call to compute alpha.
+	mul_karatsuba_helper( f0, g0, d);
+
+	// Second recursive call to compute beta.
+	panic!("mul_karatsuba_helper");
+}
+
+
+
+
 //Top level call in which condition 1 and 2 are not met
 
 fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],

@@ -143,3 +143,27 @@ pub fn get_zero( x : &Integer, i : usize) -> Block {
 		Some( xi) => *xi,
 	}
 }
+
+// Computes the ceiling of usize division. Assumes x != 0. 
+// http://stackoverflow.com/a/2745086/382462
+#[inline(always)]
+pub fn ceiling( x : usize, y : usize) -> usize {
+	1 + ((x - 1) / y)
+}
+
+// Checks if x is a power of 2. 
+// http://stackoverflow.com/a/600306/382462
+pub fn is_power_of_two( x : usize) -> bool {
+	(x != 0) && (x & (x - 1) == 0)
+}
+
+// Computes the ceiling of the log (base two) of the input. Assumes x != 0.
+pub fn ceiling_log_two( x : usize) -> usize {
+	let h = (BLOCK_SIZE - x.leading_zeros()) as usize;
+	if is_power_of_two( x) {
+		h - 1
+	}
+	else {
+		h
+	}
+}
