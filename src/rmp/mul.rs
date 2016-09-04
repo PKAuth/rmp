@@ -76,17 +76,17 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	// m(1) = 2
 	// m(2) = 4
 	// m(3) = 6
-	// m(2k) = 4k + m(k + 1)          [even]
-	// m(2k-1) = 4k - 2 + m(k + 1)    [odd]
+	// m(2k) = 6k + 2 + m(k + 1)          [even]
+	// m(2k-1) = 6k - 1 + m(k + 1)        [odd]
 	// 
 	// Recurrence:
-	// m(n) ~ c + 4(n - 3) + 6 lg(n - 3) - 4
+	// m(n) ~ c + 6(n - 3) + 11 lg(n - 3) - 6
 	//
 	// Overapproximation:
-	// m(n) ~ 4n + 6 lg(n)
+	// m(n) ~ 6n + 11 lg(n)
 
 	let n = lhs.size();
-	let outputSize = n * 4 + 6 * ceiling_log_two( n);
+	let outputSize = n * 6 + 11 * ceiling_log_two( n);
 	let mut h : Vec<Block> = vec![0; outputSize]; 
 
 	mul_karatsuba_helper(&lhs.content, &rhs.content, &mut h); 
@@ -117,22 +117,63 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	// Second recursive call to compute beta.
 	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
 
+	{
+
+		// let f_ = &mut d[2*n..2*n+k+1];
+		// let g_ = &mut d[2*n+k+1..2*(n+k+1)];
+
+		// Add halves of f and g.
+		let (f_, d) = d[2*n..].split_at_mut( k + 1);
+		mul_karatsuba_add_halves( f0, f1, f_);
+		let (g_, d) = d.split_at_mut( k + 1);
+		mul_karatsuba_add_halves( g0, g1, g_);
+
+		// Third recursive call to compute gamma.
+		mul_karatsuba_helper( f_, g_, d); // TODO: Do these indices change for odd length inputs? XXX
+	}
 	panic!("add/subtract some things...");
 
-	let f_ = mul_karatsuba_add_halves( f0, f1);
-	let g_ = mul_karatsuba_add_halves( g0, g1);
-
-	mul_karatsuba_helper( &f_, &g_, &mut d[2*n..]); // TODO: Do these indices change for odd length inputs? XXX
-	panic!("add/subtract some things...");
+	// Compute beta0 - alpha1 in third slot.
 }
 
 // Assumes f is longer than g.
-// TODO: Move to output?? Use output???
-fn mul_karatsuba_add_halves<'a>( f : &'a[Block], g : &'a[Block]) -> Vec<Block> {
-	let res = vec![0; f.len() + 1];
-	panic!("TODO");
+fn mul_karatsuba_add_halves( f : &[Block], g : &[Block], d : &mut [Block]) {
+	let mut c = false;
+	let mut i : usize = 0;
 
-	res
+	while i < g.len() {
+		let (mut x, a) = f[i].overflowing_add( g[i]);
+
+		if c {
+			let (y, e) = x.overflowing_add( 1);
+			c = a || e;
+			x = y;
+		}
+		else {
+			c = a;
+		}
+
+		d[i] = x;
+
+		i += 1;
+	}
+
+	while i < f.len() {
+		if c {
+			let (x, a) = f[i].overflowing_add( 1);
+
+			d[i] = x;
+			c = a;
+		}
+		else {
+			d[i] = f[i];
+			c = false;
+		}
+
+		i += 1;
+	}
+
+	d[i] = if c {1} else {0};
 }
 
 
