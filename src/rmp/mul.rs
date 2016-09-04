@@ -101,6 +101,7 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 
 	// Check base case.
 	if n < KARATSUBA_LIMIT {
+		panic!("TODO: Do we need to zero memory before?");
 		mul_base_case( f, g, d); // JP: Should we cut d off? 
 		return;
 	}
@@ -114,9 +115,25 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	mul_karatsuba_helper( f0, g0, d);
 
 	// Second recursive call to compute beta.
-	panic!("mul_karatsuba_helper");
+	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
+
+	panic!("add/subtract some things...");
+
+	let f_ = mul_karatsuba_add_halves( f0, f1);
+	let g_ = mul_karatsuba_add_halves( g0, g1);
+
+	mul_karatsuba_helper( &f_, &g_, &mut d[2*n..]); // TODO: Do these indices change for odd length inputs? XXX
+	panic!("add/subtract some things...");
 }
 
+// Assumes f is longer than g.
+// TODO: Move to output?? Use output???
+fn mul_karatsuba_add_halves<'a>( f : &'a[Block], g : &'a[Block]) -> Vec<Block> {
+	let res = vec![0; f.len() + 1];
+	panic!("TODO");
+
+	res
+}
 
 
 
