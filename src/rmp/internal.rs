@@ -167,3 +167,9 @@ pub fn ceiling_log_two( x : usize) -> usize {
 		h
 	}
 }
+
+#[inline(always)]
+// JP: Move to a trait?
+pub fn usize_is_odd(x : usize) -> bool {
+	x & 1 == 1
+}

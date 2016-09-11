@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use super::internal::{pos_integer, ceiling, ceiling_log_two};
+use super::internal::{pos_integer, ceiling, ceiling_log_two, usize_is_odd};
 use super::{Integer, Block, LongBlock, BLOCK_SIZE};
 static KARATSUBA_LIMIT : usize = 16;
 
@@ -70,7 +70,9 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 }
 
 
+// Assumes lhs and rhs are of equal length.
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
+	panic!("TODO: The recurrence is wrong. need nore space for odds.. Maybe not? Just need to fix indicies for beta and gamma?");
 
 	// Memory usage justification:
 	// m(1) = 2
@@ -122,8 +124,11 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 		// let f_ = &mut d[2*n..2*n+k+1];
 		// let g_ = &mut d[2*n+k+1..2*(n+k+1)];
 
+		// If n is odd, output space is 4*k-2 instead of 4*k.
+		let scratchIndex = if usize_is_odd( n) {4 * k - 2} else {4*k};
+
 		// Add halves of f and g.
-		let (f_, d) = d[2*n..].split_at_mut( k + 1);
+		let (f_, d) = d[scratchIndex..].split_at_mut( k + 1);
 		mul_karatsuba_add_halves( f0, f1, f_);
 		let (g_, d) = d.split_at_mut( k + 1);
 		mul_karatsuba_add_halves( g0, g1, g_);
@@ -167,7 +172,8 @@ fn mul_karatsuba_add_halves( f : &[Block], g : &[Block], d : &mut [Block]) {
 		}
 		else {
 			d[i] = f[i];
-			c = false;
+			// c is always false. 
+			// c = false;
 		}
 
 		i += 1;
