@@ -136,19 +136,21 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 		// Third recursive call to compute gamma.
 		mul_karatsuba_helper( f_, g_, d); // TODO: Do these indices change for odd length inputs? XXX
 	}
-	panic!("add/subtract some things...");
-
-	// Compute alpha1- beta0  in second slot.
-	let snd_carry = { 
+	{ 
 		let (a, b) = d[k..].split_at_mut(k); 
-		mul_karatsuba_subtract_from(a, &b[0..k]); 
-	}; 
-	//let thd_carry = {
-	//	
-	//}
+		let b = &mut b[0..k]; 
+		// Compute alpha1- beta0  in second slot.
+		let snd_carry = mul_karatsuba_subtract_from(a, b);  
+		let thd_is_zero = mul_karatsuba_negate(a, b);  
+		//thd_carry is negative if  b < a  
+		let thd_carry = if snd_carry == 0 && !thd_is_zero { -1} else {0};
+		
+	} 
+	panic!("add/subtract some things...");
 }
 //Assumes length of num == len of output
-fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool{
+// returns true if output = 0 (ie num == 0, a == b to begin with) 
+fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 	let mut c = true; 
 	
 	for i in 0 .. num.len() {
@@ -166,7 +168,7 @@ fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool{
 }
 
 //Assumes lhs is longer than rhs
-fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> bool{
+fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock{
 	let mut c = false; 
 	let mut i : usize = 0; 
 
@@ -191,7 +193,7 @@ fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> bool{
 		i += 1; 
 	}
 	
-	c
+	if c { -1 } else {0} 
 }
 
 
