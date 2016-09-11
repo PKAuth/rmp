@@ -138,8 +138,63 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	}
 	panic!("add/subtract some things...");
 
-	// Compute beta0 - alpha1 in third slot.
+	// Compute alpha1- beta0  in second slot.
+	let snd_carry = { 
+		let (a, b) = d[k..].split_at_mut(k); 
+		mul_karatsuba_subtract_from(a, &b[0..k]); 
+	}; 
+	//let thd_carry = {
+	//	
+	//}
 }
+//Assumes length of num == len of output
+fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool{
+	let mut c = true; 
+	
+	for i in 0 .. num.len() {
+		let tmp = num[i] ^ (Block::max_value()); 
+		if c{
+			let (x, e) = tmp.overflowing_add(1); 
+			output[i] = x; 
+			c = e; 
+		}
+		else{
+			output[i] = tmp;
+		}
+	}
+	c 
+}
+
+//Assumes lhs is longer than rhs
+fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> bool{
+	let mut c = false; 
+	let mut i : usize = 0; 
+
+	while i < rhs.len(){
+		let (mut x, a) = lhs[i].overflowing_sub(rhs[i]); 
+		
+		if c{
+			let (y, e) = x.overflowing_sub( 1); 
+			c = a || e; 
+			x = y; 
+		}
+		else{
+			c = a; 
+		}
+		lhs[i] = x; 
+		i+= 1; 
+	}
+	while c && i < lhs.len(){
+		let (x, a) = lhs[i].overflowing_sub(1); 
+		lhs[i] = x; 
+		c = a; 
+		i += 1; 
+	}
+	
+	c
+}
+
+
 
 // Assumes f is longer than g.
 fn mul_karatsuba_add_halves( f : &[Block], g : &[Block], d : &mut [Block]) {
