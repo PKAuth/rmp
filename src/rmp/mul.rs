@@ -119,44 +119,54 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	// Second recursive call to compute beta.
 	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
 
-	{
-		// If n is odd, output space is 4*k-2 instead of 4*k.
-		let (s0, d) = d.split_at_mut( k);
-		let (s1, d) = d.split_at_mut( k);
-		let (s2, d) = d.split_at_mut( k);
-		let (s3, d) = d.split_at_mut( if usize_is_odd( n) {k - 2} else {k});
+	// If n is odd, output space is 4*k-2 instead of 4*k.
+	let (s0, d) = d.split_at_mut( k);
+	let (s1, d) = d.split_at_mut( k);
+	let (s2, d) = d.split_at_mut( k);
+	let (s3, d) = d.split_at_mut( if usize_is_odd( n) {k - 2} else {k});
 
-		// Add halves of f and g.
-		let (f_, d) = d.split_at_mut( k + 1);
-		mul_karatsuba_add_halves( f0, f1, f_);
-		let (g_, d) = d.split_at_mut( k + 1);
-		mul_karatsuba_add_halves( g0, g1, g_);
+	// Add halves of f and g.
+	let (f_, d) = d.split_at_mut( k + 1);
+	mul_karatsuba_add_halves( f0, f1, f_);
+	let (g_, d) = d.split_at_mut( k + 1);
+	mul_karatsuba_add_halves( g0, g1, g_);
 
-		// Third recursive call to compute gamma.
-		mul_karatsuba_helper( f_, g_, d);
+	// Third recursive call to compute gamma.
+	mul_karatsuba_helper( f_, g_, d);
 
-		// Divide up gamma.
-		let (g0, d) = d.split_at( k);
-		let (g1, g2) = d.split_at( k);
+	// Divide up gamma.
+	let (g0, d) = d.split_at( k);
+	let (g1, g2) = d.split_at( k);
 
-		// Compute alpha1 - beta0 in second slot.
-		let carry1 = mul_karatsuba_subtract_from( s1, s2);  
+	// Compute alpha1 - beta0 in second slot.
+	let carry1 = mul_karatsuba_subtract_from( s1, s2);  
 
-		// Compute -( alpha1 - beta0) in third slot.
-		let is_2_zero = mul_karatsuba_negate( s1, s2);  
+	// Compute -( alpha1 - beta0) in third slot.
+	let is_2_zero = mul_karatsuba_negate( s1, s2);  
 
-		// carry2 is negative if beta0 < alpha1.
-		let carry2 = if carry1 == 0 && !is_2_zero { -1} else {0};
-		
-		// Subtract alpha0 from s1.
-		let carry1 = carry1 + mul_karatsuba_subtract_from( s1, s0);
+	// carry2 is negative if beta0 < alpha1.
+	let carry2 = if carry1 == 0 && !is_2_zero { -1} else {0};
+	
+	// Subtract alpha0 from s1.
+	let carry1 = carry1 + mul_karatsuba_subtract_from( s1, s0);
 
-		// Subtract beta1 from s2.
-		let carry2 = carry2 + mul_karatsuba_subtract_from( s2, s3);
-	}
+	// Add gamma0 to s1.
+	let carry1 = carry1 + mul_karatsuba_add_to( s1, g0);
 
+	// Subtract beta1 from s2.
+	let carry2 = carry2 + mul_karatsuba_subtract_from( s2, s3);
 
-	panic!("add/subtract some things...");
+	// Add gamma1 to s2.
+	let carry2 = carry2 + mul_karatsuba_add_to( s2, g1);
+
+	// Add gamma2 to s3.
+	let carry3 = mul_karatsuba_add_to( s3, g2);
+
+	// Add carries.
+	let carry2 = carry2 + mul_karatsuba_add_carry( s2, carry1);
+	let carry3 = carry3 + mul_karatsuba_add_carry( s3, carry2);
+
+	assert!( carry3 == 0); // TODO: This should always be true.. Remove eventually.. XXX
 }
 
 // Assumes length of num == len of output.
@@ -178,7 +188,39 @@ fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 	c 
 }
 
-//Assumes lhs is longer than rhs
+// Assumes lhs is longer than rhs.
+fn mul_karatsuba_add_to( lhs : &mut [Block], rhs : &[Block]) -> SignedBlock {
+	let mut c = false;
+	let mut i : usize = 0;
+
+	while i < rhs.len() {
+		let (mut x, a) = lhs[i].overflowing_add( rhs[i]);
+
+		if c {
+			let (y, e) = x.overflowing_add( 1);
+			c = a || e;
+			x = y
+		}
+		else {
+			c = a;
+		}
+
+		lhs[i] = x;
+		i += 1;
+	}
+
+	while c && i < lhs.len() {
+		let (x, a) = lhs[i].overflowing_add( 1);
+
+		lhs[i] = x;
+		c = a;
+		i += 1;
+	}
+	
+	if c {1} else {0}
+}
+
+// Assumes lhs is longer than rhs.
 fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock {
 	let mut c = false; 
 	let mut i : usize = 0; 
@@ -206,8 +248,6 @@ fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock
 	
 	if c { -1 } else {0} 
 }
-
-
 
 // Assumes f is longer than g.
 fn mul_karatsuba_add_halves( f : &[Block], g : &[Block], d : &mut [Block]) {
@@ -250,7 +290,32 @@ fn mul_karatsuba_add_halves( f : &[Block], g : &[Block], d : &mut [Block]) {
 	d[i] = if c {1} else {0};
 }
 
+fn mul_karatsuba_add_carry( v : &mut [Block], carry : SignedBlock) -> SignedBlock {
+	let mut c = carry;
 
+	for i in 0..v.len() {
+		// Zero.
+		if c == 0 {
+			return 0
+		}
+
+		// Positive.
+		else if c > 0 {
+			let (x, a) = v[i].overflowing_add( c as Block);
+			v[i] = x;
+			c = if a {1} else {0};
+		}
+
+		// Negative.
+		else {
+			let (x, a) = v[i].overflowing_sub( (-1 * c) as Block);
+			v[i] = x;
+			c = if a {-1} else {0};
+		}
+	}
+
+	c
+}
 
 //Top level call in which condition 1 and 2 are not met
 
