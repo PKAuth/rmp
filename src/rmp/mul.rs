@@ -1,7 +1,7 @@
 use std::ops::Mul;
 
 use super::internal::{pos_integer, ceiling, ceiling_log_two, usize_is_odd};
-use super::{Integer, Block, LongBlock, BLOCK_SIZE};
+use super::{Integer, Block, LongBlock, BLOCK_SIZE, SignedBlock};
 static KARATSUBA_LIMIT : usize = 16;
 
 impl Integer {
@@ -119,13 +119,13 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	// Second recursive call to compute beta.
 	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
 
+	// If n is odd, output space is 4*k-2 instead of 4*k.
+	let scratchIndex = if usize_is_odd( n) {4 * k - 2} else {4*k};
+
 	{
 
 		// let f_ = &mut d[2*n..2*n+k+1];
 		// let g_ = &mut d[2*n+k+1..2*(n+k+1)];
-
-		// If n is odd, output space is 4*k-2 instead of 4*k.
-		let scratchIndex = if usize_is_odd( n) {4 * k - 2} else {4*k};
 
 		// Add halves of f and g.
 		let (f_, d) = d[scratchIndex..].split_at_mut( k + 1);
@@ -136,20 +136,27 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 		// Third recursive call to compute gamma.
 		mul_karatsuba_helper( f_, g_, d); // TODO: Do these indices change for odd length inputs? XXX
 	}
-	{ 
+
+	let (snd_carry, thd_carry) = { 
 		let (a, b) = d[k..].split_at_mut(k); 
 		let b = &mut b[0..k]; 
-		// Compute alpha1- beta0  in second slot.
+
+		// Compute alpha1 - beta0 in second slot.
 		let snd_carry = mul_karatsuba_subtract_from(a, b);  
+
+		// Compute -( alpha1 - beta0) in third slot.
 		let thd_is_zero = mul_karatsuba_negate(a, b);  
-		//thd_carry is negative if  b < a  
+
+		// thd_carry is negative if b < a.
 		let thd_carry = if snd_carry == 0 && !thd_is_zero { -1} else {0};
 		
-	} 
+		(snd_carry, thd_carry)
+	};
 	panic!("add/subtract some things...");
 }
-//Assumes length of num == len of output
-// returns true if output = 0 (ie num == 0, a == b to begin with) 
+
+// Assumes length of num == len of output.
+// Returns true if output = 0 (ie num == 0, a == b to begin with) 
 fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 	let mut c = true; 
 	
@@ -168,7 +175,7 @@ fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 }
 
 //Assumes lhs is longer than rhs
-fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock{
+fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock {
 	let mut c = false; 
 	let mut i : usize = 0; 
 
@@ -563,6 +570,7 @@ fn mul_karatsuba_sub(d : &mut[Block], output_offset : usize, left_offset :
 	}
 
 }
+
 fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 	for i in 0 .. lhs.len(){
 		let li : LongBlock = lhs[i] as LongBlock;
