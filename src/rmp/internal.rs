@@ -2,6 +2,8 @@
 
 use super::{Block, LongBlock, Integer, BLOCK_SIZE};
 
+use std::mem::{size_of};
+
 pub fn normalize_leading_zeroes( v : &mut Integer) {
 	remove_leading_zeroes( &mut v.content);
 
@@ -159,7 +161,7 @@ pub fn is_power_of_two( x : usize) -> bool {
 
 // Computes the ceiling of the log (base two) of the input. Assumes x != 0.
 pub fn ceiling_log_two( x : usize) -> usize {
-	let h = (BLOCK_SIZE - x.leading_zeros()) as usize;
+	let h = 8 * size_of::<usize>() - (x.leading_zeros() as usize);
 	if is_power_of_two( x) {
 		h - 1
 	}

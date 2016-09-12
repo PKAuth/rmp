@@ -72,7 +72,6 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 // Assumes lhs and rhs are of equal length.
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
-	panic!("TODO: The recurrence is wrong. need nore space for odds.. Maybe not? Just need to fix indicies for beta and gamma?");
 
 	// Memory usage justification:
 	// m(1) = 2
@@ -93,7 +92,8 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 
 	mul_karatsuba_helper(&lhs.content, &rhs.content, &mut h); 
 
-	panic!("TODO: cut off scratch space. XXX");
+	// Cut off scratch space.
+	h.truncate( 2 * n);
 
 	pos_integer(h) 
 }
@@ -103,7 +103,11 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 
 	// Check base case.
 	if n < KARATSUBA_LIMIT {
-		panic!("TODO: Do we need to zero memory before?");
+		// Zero output memory.
+		for i in 0..2*n {
+			d[i] = 0;
+		}
+
 		mul_base_case( f, g, d); // JP: Should we cut d off? 
 		return;
 	}
@@ -137,6 +141,7 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	// Divide up gamma.
 	let (g0, d) = d.split_at( k);
 	let (g1, g2) = d.split_at( k);
+	let g2 = &g2[0..2];
 
 	// Compute alpha1 - beta0 in second slot.
 	let carry1 = mul_karatsuba_subtract_from( s1, s2);  
@@ -656,9 +661,7 @@ fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 			out[i+j] = t as Block; 
 		}	
 		
-		println!("Before out"); 
 		out[i+rhs.len()] = carry as Block;
-		println!("After out"); 
 	}
 }
 
