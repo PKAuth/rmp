@@ -119,39 +119,43 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	// Second recursive call to compute beta.
 	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
 
-	// If n is odd, output space is 4*k-2 instead of 4*k.
-	let scratchIndex = if usize_is_odd( n) {4 * k - 2} else {4*k};
-
 	{
-
-		// let f_ = &mut d[2*n..2*n+k+1];
-		// let g_ = &mut d[2*n+k+1..2*(n+k+1)];
+		// If n is odd, output space is 4*k-2 instead of 4*k.
+		let (s0, d) = d.split_at_mut( k);
+		let (s1, d) = d.split_at_mut( k);
+		let (s2, d) = d.split_at_mut( k);
+		let (s3, d) = d.split_at_mut( if usize_is_odd( n) {k - 2} else {k});
 
 		// Add halves of f and g.
-		let (f_, d) = d[scratchIndex..].split_at_mut( k + 1);
+		let (f_, d) = d.split_at_mut( k + 1);
 		mul_karatsuba_add_halves( f0, f1, f_);
 		let (g_, d) = d.split_at_mut( k + 1);
 		mul_karatsuba_add_halves( g0, g1, g_);
 
 		// Third recursive call to compute gamma.
-		mul_karatsuba_helper( f_, g_, d); // TODO: Do these indices change for odd length inputs? XXX
-	}
+		mul_karatsuba_helper( f_, g_, d);
 
-	let (snd_carry, thd_carry) = { 
-		let (a, b) = d[k..].split_at_mut(k); 
-		let b = &mut b[0..k]; 
+		// Divide up gamma.
+		let (g0, d) = d.split_at( k);
+		let (g1, g2) = d.split_at( k);
 
 		// Compute alpha1 - beta0 in second slot.
-		let snd_carry = mul_karatsuba_subtract_from(a, b);  
+		let carry1 = mul_karatsuba_subtract_from( s1, s2);  
 
 		// Compute -( alpha1 - beta0) in third slot.
-		let thd_is_zero = mul_karatsuba_negate(a, b);  
+		let is_2_zero = mul_karatsuba_negate( s1, s2);  
 
-		// thd_carry is negative if b < a.
-		let thd_carry = if snd_carry == 0 && !thd_is_zero { -1} else {0};
+		// carry2 is negative if beta0 < alpha1.
+		let carry2 = if carry1 == 0 && !is_2_zero { -1} else {0};
 		
-		(snd_carry, thd_carry)
-	};
+		// Subtract alpha0 from s1.
+		let carry1 = carry1 + mul_karatsuba_subtract_from( s1, s0);
+
+		// Subtract beta1 from s2.
+		let carry2 = carry2 + mul_karatsuba_subtract_from( s2, s3);
+	}
+
+
 	panic!("add/subtract some things...");
 }
 
