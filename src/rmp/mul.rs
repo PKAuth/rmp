@@ -98,8 +98,15 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	pos_integer(h) 
 }
 
+// TODO: Remove, for debugging XXX
+fn slice_to_integer( f : &[Block]) -> Integer {
+	pos_integer( f.clone().to_vec())
+}
+
 fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 	let n = f.len();
+
+	println!("base: {} * {}", slice_to_integer( f), slice_to_integer( g));
 
 	// Check base case.
 	if n < KARATSUBA_LIMIT {
@@ -109,19 +116,24 @@ fn mul_karatsuba_helper( f : &[Block], g : &[Block], d : &mut [Block]) {
 		}
 
 		mul_base_case( f, g, d); // JP: Should we cut d off? 
+		println!("== {}", slice_to_integer( &d[0..2*n]));
 		return;
 	}
 
 	let k = ceiling( n, 2); 
+	println!("k: {}", k);
+	println!("n: {}", n);
 
 	let (f0, f1) = f.split_at( k);
 	let (g0, g1) = g.split_at( k);
 
 	// First recursive call to compute alpha.
+	println!("first: {} * {}", slice_to_integer( f0), slice_to_integer( g0));
 	mul_karatsuba_helper( f0, g0, d);
+	println!("== {}", slice_to_integer( &d[0..2*k]));
 
 	// Second recursive call to compute beta.
-	mul_karatsuba_helper( f1, g1, &mut d[n..]); // TODO: Do these indices change for odd length inputs? XXX
+	mul_karatsuba_helper( f1, g1, &mut d[2*k..]); // TODO: Do these indices change for odd length inputs? XXX
 
 	// If n is odd, output space is 4*k-2 instead of 4*k.
 	let (s0, d) = d.split_at_mut( k);
