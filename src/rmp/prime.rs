@@ -19,14 +19,22 @@ impl Integer {
 			p.add_mut( &i1);
 		}
 
+		let mut trial_table = p.is_probably_prime_compute_trial_table();
+
 		let i2 = Integer::from( 2);
 		// let mut c = 0;
-		for _ in 0..100 {
-			if p.is_probably_prime( rng) {
+		for _ in 0..500 {
+			if p.is_probably_prime_helper( &trial_table, rng) {
 				return p
 			}
 
 			p.add_mut( &i2);
+			// Increment trial table.
+			for (i, x) in trial_table.iter_mut().enumerate() {
+				x.add_mut( &i2);
+				let p = Integer::from( FIRST_PRIMES[i]);
+				*x = x.modulus( &p);
+			}
 		}
 
 		Integer::generate_prime( b, rng)
@@ -35,11 +43,24 @@ impl Integer {
 	/// Determine whether the integer is probably prime. 
 	pub fn is_probably_prime(&self, rng : &mut OsRng) -> bool {
 		// Note: Check for negatives and evens; less than 4?
+		let trial_table = self.is_probably_prime_compute_trial_table();
+		self.is_probably_prime_helper( &trial_table, rng)
+	}
 
+	fn is_probably_prime_compute_trial_table(&self) -> Vec<Integer> {
+		FIRST_PRIMES.iter().map(|fp| {let p = Integer::from(*fp); self.modulus( &p)}).collect()
+	}
+
+	fn is_probably_prime_helper(&self, trial_table : &Vec<Integer>, rng : &mut OsRng) -> bool {
 		// Check if integer is multiple of the earliest primes.
-		if FIRST_PRIMES.iter().any( |fp| {let p = Integer::from( *fp); p < *self && self.is_multiple_of( &p)}) {
+		if trial_table.iter().any(|x| {x.is_zero()}) {
 			return false
 		}
+
+		// OLD
+		// if FIRST_PRIMES.iter().any( |fp| {let p = Integer::from( *fp); p < *self && self.is_multiple_of( &p)}) {
+		// 	return false
+		// }
 
 		// Fermat primality test.
 		if !self.fermat_primality_test( 1, rng) {
