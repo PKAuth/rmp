@@ -2,7 +2,7 @@ extern crate rand;
 
 use std::cmp::{min};
 use std::iter::Iterator;
-use std::ops::{Neg};
+use std::ops::{Neg, Shl};
 use self::rand::OsRng;
 // use std::rand::OsRng;
 
@@ -24,13 +24,15 @@ impl Integer {
 
 		let i2 = Integer::from( 2);
 		// let mut c = 0;
-		while !p.is_probably_prime( rng) { // && c < 100 { // 
-			// println!("Testing: {}", p);
+		for _ in 0..100 {
+			if p.is_probably_prime( rng) {
+				return p
+			}
+
 			p.add_mut( &i2);
-			// c += 1;
 		}
 
-		p
+		Integer::generate_prime( b, rng)
 	}
 
 	/// Determine whether the integer is probably prime. 
@@ -283,6 +285,46 @@ impl Integer {
 		}
 	}
 
+	// Precompute mu for barrett reduction.
+	fn barrett_reduction_mu( m : &Integer) -> Integer {
+		let k = m.size();
+		let i1 = Integer::from(1);
+		let e = Integer::from( 2 * k * (BLOCK_SIZE as usize)); // Note: Should we check if this'll overflow?
+		i1.shl( e).modulus( m)
+	}
+
+	fn barrett_reduction( &self, mu : &Integer, m : &Integer) -> Integer {
+		let k = m.size();
+		let block_size = BLOCK_SIZE as usize;
+		let em1 = Integer::from( 2 * (k - 1) * block_size); // Note: Should we check if this'll overflow?
+		let ep1 = Integer::from( 2 * (k + 1) * block_size);
+
+		let q = self.shr_borrow( &em1).mul_borrow( mu).shr_borrow( &ep1);
+		
+		// r1 = x mod b^(k + 1)
+		let mut r1 = self.clone();
+		for _ in (k + 1)..self.size() {
+			r1.content.pop();
+		}
+
+		let mut r2 = q.mul_borrow( &m);
+		for _ in (k + 1)..r2.size() {
+			r2.content.pop();
+		}
+
+		r1.sub_mut( &r2);
+
+		if r1.is_negative() {
+			let i1 = Integer::from( 1);
+			r1.add_mut( &i1.shl_borrow( &Integer::from( (k + 1) * block_size)));
+		}
+
+		while r1 >= *m {
+			r1.sub_mut( &m);
+		}
+
+		r1
+	}
 
 	// Compute the multiplicative inverse of self modulus m.
 	pub fn multiplicative_inverse( &self, m : &Integer) -> Option<Integer> {
