@@ -322,6 +322,8 @@ fn mul_karatsuba_add_carry( v : &mut [Block], carry : SignedBlock) -> SignedBloc
 	c
 }
 
+/*
+
 //Top level call in which condition 1 and 2 are not met
 
 fn mul_karatsuba_helper_top(a : &[Block], c : &[Block],
@@ -644,6 +646,7 @@ fn mul_karatsuba_sub(d : &mut[Block], output_offset : usize, left_offset :
 	}
 
 }
+*/
 
 fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 	for i in 0 .. lhs.len(){
