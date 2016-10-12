@@ -72,6 +72,11 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 // Assumes lhs and rhs are of equal length.
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
+	panic!("TODO")
+}
+
+/*
+fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 
 	// Memory usage justification:
 	// m(1) = 2
@@ -321,8 +326,6 @@ fn mul_karatsuba_add_carry( v : &mut [Block], carry : SignedBlock) -> SignedBloc
 
 	c
 }
-
-/*
 
 //Top level call in which condition 1 and 2 are not met
 
