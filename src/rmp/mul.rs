@@ -71,9 +71,245 @@ fn multiply( lhs : &Integer, rhs : &Integer) -> Integer {
 
 
 // Assumes lhs and rhs are of equal length.
+// TODO: Handle case for odd length.. XXX
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
-	panic!("TODO")
+	let output_size = 2 * lhs.size();
+	let mut h : Vec<Block> = vec![0; output_size];
+
+	// TODO: other versions of karat, etc XXX
+
+	mul_karatsuba_helper_12( &lhs.content, &vec![0; lhs.size()], &rhs.content, &mut h);
+
+	pos_integer( h)
 }
+
+fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut[Block]) {
+	let n = g.len();
+
+	// Check base case.
+	if n < KARATSUBA_LIMIT {
+		panic!("TODO")
+	}
+
+	let k = ceiling( n, 2); // TODO: What to do here... XXX
+
+	{
+		let (s0, d) = d.split_at_mut( k);
+		let s1 = &mut d[0..k];
+		// d[1] = h1 - h0
+		let carry1 = mul_karatsuba_subtract_from( s1, s0);
+	}
+
+	// JP: What do we do if negative?? XXX
+
+	{
+		let s3 = &mut d[3*k..4*k];
+		let carry2 = mul_karatsuba_assa( &f0[0..k], &f1[0..k], &f0[k..2*k], &f1[k..2*k], s3);
+		// JP: What do we do if negative?? XXX
+	}
+
+	{
+		// JP: Swap order of g's so that it's negative? How do we handle carry??? XXX
+		let (d, s3) = d.split_at_mut( 3*k);
+		let s23 = &mut d[k..];
+		mul_karatsuba_helper_12( &g[k..2*k], &g[0..k], s3, s23);
+		// TODO: sign XXX
+	}
+
+	{
+		// s3 = s1 - s2
+		let (s1, d) = d[k..].split_at_mut( k);
+		let (s2, s3) = d.split_at_mut(k);
+		let carry3 = mul_karatsuba_subtract( s1, s2, s3);
+		// TODO: carry... XXX
+	}
+
+	{
+		// alpha = (f0_0 - f1_0) * g_0
+		let s01 = &mut d[0..2*k];
+		mul_karatsuba_helper_12( &f0[0..k], &f1[0..k], &g[0..k], s01);
+	}
+
+	{
+		// s2 += s1
+		let (s1, d) = d[k..].split_at_mut( k);
+		let s2 = &mut d[0..k];
+		let carry4 = mul_karatsuba_add_to( s2, s1);
+		// TODO: sign XXX
+	}
+
+	let (s0, d) = d.split_at_mut( k);
+	let (s1, s23) = d.split_at_mut( k);
+	{
+		// s1 = s0 + s3
+		let s3 = &s23[k..2*k];
+		let carry5 = mul_karatsuba_add( s0, s3, s1);
+		// TODO: sign XXX
+	}
+
+	// beta = (f0_1 - f1_1) * g_1
+	mul_karatsuba_helper_12( &f0[k..2*k], &f1[k..2*k], &g[k..2*k], s23);
+
+	let (s2, s3) = s23.split_at_mut( k);
+
+	// s1 += s2
+	let carry6 = mul_karatsuba_add_to( s1, s2);
+
+	// s2 += s3
+	let carry7 = mul_karatsuba_add_to( s2, s3);
+
+
+}
+
+// Assumes |lhs| == |rhs| == |d|.
+fn mul_karatsuba_subtract(lhs : &[Block], rhs :&[Block], d : &mut [Block]) -> SignedBlock {
+	let mut c = false;
+
+	for i in 0..lhs.len() {
+		let (mut x, a) = lhs[i].overflowing_sub( rhs[i]);
+
+		if c {
+			let (y, e) = x.overflowing_sub( 1);
+			c = a || e;
+			x = y;
+		}
+		else {
+			c = a;
+		}
+
+		d[i] = x;
+	}
+
+	if c {-1} else {0}
+}
+
+// Assumes lhs is longer than rhs.
+fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock {
+	let mut c = false; 
+	let mut i : usize = 0; 
+
+	while i < rhs.len() {
+		let (mut x, a) = lhs[i].overflowing_sub( rhs[i]); 
+		
+		if c {
+			let (y, e) = x.overflowing_sub( 1); 
+			c = a || e; 
+			x = y; 
+		}
+		else {
+			c = a; 
+		}
+
+		lhs[i] = x; 
+		i+= 1; 
+	}
+
+	while c && i < lhs.len() {
+		let (x, a) = lhs[i].overflowing_sub( 1);
+		lhs[i] = x;
+		c = a;
+		i += 1;
+	}
+	
+	if c { -1 } else {0} 
+}
+
+// Assumes |lhs| == |rhs| == |d|.
+fn mul_karatsuba_add( lhs : &mut [Block], rhs : &[Block], d : &mut [Block]) -> SignedBlock {
+	let mut c = false;
+	for i in 0..lhs.len() {
+		let (mut x, a) = lhs[i].overflowing_add( rhs[i]);
+		if c {
+			let (y, e) = x.overflowing_add( 1);
+			c = a || e;
+			x = y;
+		}
+		else {
+			c = a;
+		}
+
+		d[i] = x;
+	}
+
+	if c {1} else {0}
+}
+
+// Assumes lengths of all are equal.
+fn mul_karatsuba_assa( w : &[Block], x : &[Block], y : &[Block], z : &[Block], d : &mut [Block]) -> SignedBlock {
+	let mut carry : SignedBlock = 0;
+
+	for i in 0..d.len() {
+		// 	d[i] = w[i] - x[i] - y[i] + z[i] + carry
+		let mut r = carry as Block;
+		if carry >= 0 {
+			carry = 0;
+		}
+		else {
+			carry = -1;
+		}
+
+		let (t, c) = r.overflowing_add( w[i]);
+		r = t;
+		if c {
+			carry += 1;
+		}
+
+		let (t, c) = r.overflowing_sub( x[i]);
+		r = t;
+		if c {
+			carry = carry - 1;
+		}
+
+		let (t, c) = r.overflowing_sub( y[i]);
+		r = t;
+		if c {
+			carry = carry - 1;
+		}
+
+		let (t, c) = r.overflowing_add( z[i]);
+		r = t;
+		if c {
+			carry += 1;
+		}
+
+		d[i] = r
+	}
+	
+	carry
+}
+
+// Assumes lhs is longer than rhs.
+fn mul_karatsuba_add_to( lhs : &mut [Block], rhs : &[Block]) -> SignedBlock {
+	let mut c = false;
+	let mut i : usize = 0;
+
+	while i < rhs.len() {
+		let (mut x, a) = lhs[i].overflowing_add( rhs[i]);
+
+		if c {
+			let (y, e) = x.overflowing_add( 1);
+			c = a || e;
+			x = y;
+		}
+		else {
+			c = a;
+		}
+
+		lhs[i] = x;
+		i += 1;
+	}
+
+	while c && i < lhs.len() {
+		let (x, a) = lhs[i].overflowing_add( 1);
+
+		lhs[i] = x;
+		c = a;
+		i += 1;
+	}
+	
+	if c {1} else {0}
+}
+
 
 /*
 fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
@@ -196,67 +432,6 @@ fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 		}
 	}
 	c 
-}
-
-// Assumes lhs is longer than rhs.
-fn mul_karatsuba_add_to( lhs : &mut [Block], rhs : &[Block]) -> SignedBlock {
-	let mut c = false;
-	let mut i : usize = 0;
-
-	while i < rhs.len() {
-		let (mut x, a) = lhs[i].overflowing_add( rhs[i]);
-
-		if c {
-			let (y, e) = x.overflowing_add( 1);
-			c = a || e;
-			x = y
-		}
-		else {
-			c = a;
-		}
-
-		lhs[i] = x;
-		i += 1;
-	}
-
-	while c && i < lhs.len() {
-		let (x, a) = lhs[i].overflowing_add( 1);
-
-		lhs[i] = x;
-		c = a;
-		i += 1;
-	}
-	
-	if c {1} else {0}
-}
-
-// Assumes lhs is longer than rhs.
-fn mul_karatsuba_subtract_from(lhs : &mut [Block], rhs :&[Block]) -> SignedBlock {
-	let mut c = false; 
-	let mut i : usize = 0; 
-
-	while i < rhs.len(){
-		let (mut x, a) = lhs[i].overflowing_sub(rhs[i]); 
-		
-		if c{
-			let (y, e) = x.overflowing_sub( 1); 
-			c = a || e; 
-			x = y; 
-		}
-		else{
-			c = a; 
-		}
-		lhs[i] = x; 
-		i+= 1; 
-	}
-	while c && i < lhs.len(){
-		let (x, a) = lhs[i].overflowing_sub(1); 
-		lhs[i] = x; 
-		c = a; 
-		i += 1; 
-	}
-	
-	if c { -1 } else {0} 
 }
 
 // Assumes f is longer than g.
