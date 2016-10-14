@@ -108,9 +108,10 @@ fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut
 		let negative = mul_karatsuba_subtract( f0, f1, &mut tmp);
 		
 		// TODO XXX
-		// if negative {
+		if negative {
+			panic!("TODO");
 		// 	let _ = mul_karatsuba_negate( &mut tmp);
-		// }
+		}
 
 		mul_base_case( &tmp, g, d);
 		return negative;
