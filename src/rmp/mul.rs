@@ -83,12 +83,21 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	pos_integer( h)
 }
 
-fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut[Block]) {
+fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut[Block]) -> bool {
 	let n = g.len();
 
 	// Check base case.
 	if n < KARATSUBA_LIMIT {
-		panic!("TODO")
+		let mut tmp = vec![ 0; n]; // TODO: Can we get rid of tmp's allocation??? XXX
+		let negative = mul_karatsuba_subtract( f0, f1, &mut tmp);
+		
+		// TODO XXX
+		// if negative {
+		// 	let _ = mul_karatsuba_negate( &mut tmp);
+		// }
+
+		mul_base_case( &tmp, g, d);
+		return negative;
 	}
 
 	let k = ceiling( n, 2); // TODO: What to do here... XXX
@@ -103,6 +112,7 @@ fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut
 	// JP: What do we do if negative?? XXX
 
 	{
+		// println!("{} {}", k, n);
 		let s3 = &mut d[3*k..4*k];
 		let carry2 = mul_karatsuba_assa( &f0[0..k], &f1[0..k], &f0[k..2*k], &f1[k..2*k], s3);
 		// JP: What do we do if negative?? XXX
@@ -158,11 +168,13 @@ fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut
 	// s2 += s3
 	let carry7 = mul_karatsuba_add_to( s2, s3);
 
-
+	// TODO: negatives?? XXX
+	false
 }
 
 // Assumes |lhs| == |rhs| == |d|.
-fn mul_karatsuba_subtract(lhs : &[Block], rhs :&[Block], d : &mut [Block]) -> SignedBlock {
+// Returns if there is a carry.
+fn mul_karatsuba_subtract(lhs : &[Block], rhs :&[Block], d : &mut [Block]) -> bool {
 	let mut c = false;
 
 	for i in 0..lhs.len() {
@@ -180,7 +192,8 @@ fn mul_karatsuba_subtract(lhs : &[Block], rhs :&[Block], d : &mut [Block]) -> Si
 		d[i] = x;
 	}
 
-	if c {-1} else {0}
+	// if c {-1} else {0}
+	c
 }
 
 // Assumes lhs is longer than rhs.
@@ -238,9 +251,11 @@ fn mul_karatsuba_add( lhs : &mut [Block], rhs : &[Block], d : &mut [Block]) -> S
 fn mul_karatsuba_assa( w : &[Block], x : &[Block], y : &[Block], z : &[Block], d : &mut [Block]) -> SignedBlock {
 	let mut carry : SignedBlock = 0;
 
+	// println!("{} {} {} {} {}", w.len(), x.len(), y.len(), z.len(), d.len());
+
 	for i in 0..d.len() {
 		// 	d[i] = w[i] - x[i] - y[i] + z[i] + carry
-		let mut r = carry as Block;
+		let r = carry as Block;
 		if carry >= 0 {
 			carry = 0;
 		}
@@ -248,26 +263,22 @@ fn mul_karatsuba_assa( w : &[Block], x : &[Block], y : &[Block], z : &[Block], d
 			carry = -1;
 		}
 
-		let (t, c) = r.overflowing_add( w[i]);
-		r = t;
+		let (r, c) = r.overflowing_add( w[i]);
 		if c {
 			carry += 1;
 		}
 
-		let (t, c) = r.overflowing_sub( x[i]);
-		r = t;
+		let (r, c) = r.overflowing_sub( x[i]);
 		if c {
 			carry = carry - 1;
 		}
 
-		let (t, c) = r.overflowing_sub( y[i]);
-		r = t;
+		let (r, c) = r.overflowing_sub( y[i]);
 		if c {
 			carry = carry - 1;
 		}
 
-		let (t, c) = r.overflowing_add( z[i]);
-		r = t;
+		let (r, c) = r.overflowing_add( z[i]);
 		if c {
 			carry += 1;
 		}
@@ -308,6 +319,25 @@ fn mul_karatsuba_add_to( lhs : &mut [Block], rhs : &[Block]) -> SignedBlock {
 	}
 	
 	if c {1} else {0}
+}
+
+// Assumes length of num == len of output.
+// Returns true if output = 0 (ie num == 0, a == b to begin with) 
+fn mul_karatsuba_negate(num : &mut [Block]) -> bool {
+	let mut c = true; 
+	
+	for i in 0 .. num.len() {
+		let tmp = num[i] ^ (Block::max_value()); 
+		if c {
+			let (x, e) = tmp.overflowing_add(1); 
+			num[i] = x; 
+			c = e; 
+		}
+		else {
+			num[i] = tmp;
+		}
+	}
+	c 
 }
 
 
@@ -422,12 +452,12 @@ fn mul_karatsuba_negate(num : &[Block], output : &mut[Block]) -> bool {
 	
 	for i in 0 .. num.len() {
 		let tmp = num[i] ^ (Block::max_value()); 
-		if c{
+		if c {
 			let (x, e) = tmp.overflowing_add(1); 
 			output[i] = x; 
 			c = e; 
 		}
-		else{
+		else {
 			output[i] = tmp;
 		}
 	}
