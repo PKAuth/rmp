@@ -83,6 +83,22 @@ fn mul_karatsuba_positives( lhs : &Integer, rhs : &Integer) -> Integer {
 	pos_integer( h)
 }
 
+// JP: No clue if this is what we should be doing... XXX
+fn mul_karatsuba_helper_12_neg( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut[Block]) -> bool {
+	let n = g.len();
+	let k = ceiling( n, 2); // TODO: What to do here... XXX
+
+	{
+		let _ = mul_karatsuba_negate( &mut d[0..k]);
+	}
+
+	let sign = mul_karatsuba_helper_12( f1, f0, g, d);
+
+	mul_karatsuba_negate( d);
+
+	!sign
+}
+
 fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut[Block]) -> bool {
 	let n = g.len();
 
@@ -102,27 +118,45 @@ fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut
 
 	let k = ceiling( n, 2); // TODO: What to do here... XXX
 
-	{
+	let carry1 = {
 		let (s0, d) = d.split_at_mut( k);
 		let s1 = &mut d[0..k];
 		// d[1] = h1 - h0
-		let carry1 = mul_karatsuba_subtract_from( s1, s0);
+		mul_karatsuba_subtract_from( s1, s0)
+	};
+
+	/*
+	if carry1 < 0 {
+		panic!("h1 - h0 is negative (carry1)")
 	}
+	*/
 
 	// JP: What do we do if negative?? XXX
 
-	{
+	let carry2 = {
 		// println!("{} {}", k, n);
 		let s3 = &mut d[3*k..4*k];
-		let carry2 = mul_karatsuba_assa( &f0[0..k], &f1[0..k], &f0[k..2*k], &f1[k..2*k], s3);
+		mul_karatsuba_assa( &f0[0..k], &f1[0..k], &f0[k..2*k], &f1[k..2*k], s3)
 		// JP: What do we do if negative?? XXX
-	}
+	};
 
 	{
 		// JP: Swap order of g's so that it's negative? How do we handle carry??? XXX
 		let (d, s3) = d.split_at_mut( 3*k);
 		let s23 = &mut d[k..];
-		mul_karatsuba_helper_12( &g[k..2*k], &g[0..k], s3, s23);
+		let (ga, gb) = if carry2 < 0 {
+			( &g[0..k], &g[k..2*k])
+		}
+		else {
+			( &g[k..2*k], &g[0..k])
+		};
+
+		if carry1 < 0 {
+			mul_karatsuba_helper_12_neg( ga, gb, s3, s23);
+		}
+		else {
+			mul_karatsuba_helper_12( ga, gb, s3, s23);
+		}
 		// TODO: sign XXX
 	}
 
