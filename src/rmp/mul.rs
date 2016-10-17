@@ -112,8 +112,10 @@ fn mul_karatsuba_helper_12( f0 : &[Block], f1 : &[Block], g : &[Block], d : &mut
 			panic!("TODO");
 		// 	let _ = mul_karatsuba_negate( &mut tmp);
 		}
+		else {
+			mul_base_case( &tmp, g, d);
+		}
 
-		mul_base_case( &tmp, g, d);
 		return negative;
 	}
 
@@ -891,8 +893,9 @@ fn mul_karatsuba_sub(d : &mut[Block], output_offset : usize, left_offset :
 }
 */
 
-fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
-	for i in 0 .. lhs.len(){
+// Returns out += lhs * rhs.
+fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]) {
+	for i in 0 .. lhs.len() {
 		let li : LongBlock = lhs[i] as LongBlock;
 
 		// if li == 0, ... skip
@@ -900,7 +903,7 @@ fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 			continue;
 		}
 		let mut carry : LongBlock = 0; 
-		for j in 0 .. rhs.len(){
+		for j in 0 .. rhs.len() {
 			let rj : LongBlock = rhs[j] as LongBlock;
 			let t = li * rj + (out[i+j] as LongBlock) + carry; 
 			carry = t >> BLOCK_SIZE; 
@@ -909,6 +912,41 @@ fn mul_base_case(lhs : &[Block] , rhs : &[Block], out : &mut[Block]){
 		
 		out[i+rhs.len()] = carry as Block;
 	}
+}
+
+// Returns out = out - lhs * rhs.
+fn mul_base_case_neg(lhs : &[Block] , rhs : &[Block], out : &mut[Block]) {
+	for i in 0 .. lhs.len() {
+		let li : LongBlock = lhs[i] as LongBlock;
+
+		// if li == 0, ... skip
+		if li == 0 {
+			continue;
+		}
+		let mut carry : LongBlock = 0;
+		for j in 0 .. rhs.len() {
+			let rj : LongBlock = rhs[j] as LongBlock;
+			let (t, c0) = (out[i+j] as LongBlock).overflowing_sub( li * rj);
+			let (t, c1) = t.overflowing_sub( carry);
+			// TODO: Double check all of this... XXX
+			carry = t >> BLOCK_SIZE;
+			out[i+j] = t as Block;
+			
+			if c0 {
+				carry = carry - 1;
+			}
+			
+			if c1 {
+				carry = carry - 1;
+			}
+
+			out[i+rhs.len()] = carry as Block;
+		}
+
+		panic!("TODO");
+	}
+
+	// return sign??? If carry is -1, negate? We need to keep track of this before??
 }
 
 // From: The Art of Computer Programming - Volume 2 by Knuth. Algorithm M.
